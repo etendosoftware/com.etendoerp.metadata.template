@@ -1,8 +1,292 @@
 <?xml version="1.0"?>
   <vector>
     <versionInfo version="24.2.6"/>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="153">
+      <oldValue/>
+      <newValue><![CDATA[📕]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="155">
       <oldValue/>
-      <newValue><![CDATA[🇦🇷]]></newValue>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="156">
+      <oldValue/>
+      <newValue><![CDATA[👨🏻‍💼]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="157">
+      <oldValue/>
+      <newValue><![CDATA[💼]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="158">
+      <oldValue/>
+      <newValue><![CDATA[⚖️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="159">
+      <oldValue/>
+      <newValue><![CDATA[🔧]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="160">
+      <oldValue/>
+      <newValue><![CDATA[🗂️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="161">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="164">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="165">
+      <oldValue/>
+      <newValue><![CDATA[✅]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="166">
+      <oldValue/>
+      <newValue><![CDATA[🧾]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="167">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="175">
+      <oldValue/>
+      <newValue><![CDATA[🏢]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="183">
+      <oldValue/>
+      <newValue><![CDATA[📦]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="203">
+      <oldValue/>
+      <newValue><![CDATA[💸]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="218">
+      <oldValue/>
+      <newValue><![CDATA[👨🏻‍💻]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="236">
+      <oldValue/>
+      <newValue><![CDATA[💳]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="263">
+      <oldValue/>
+      <newValue><![CDATA[🤝]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="271">
+      <oldValue/>
+      <newValue><![CDATA[🛠️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="272">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="278">
+      <oldValue/>
+      <newValue><![CDATA[💰]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="280">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="326">
+      <oldValue/>
+      <newValue><![CDATA[🖨️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="345">
+      <oldValue/>
+      <newValue><![CDATA[🗃️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="357">
+      <oldValue/>
+      <newValue><![CDATA[🏷️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="367">
+      <oldValue/>
+      <newValue><![CDATA[🔐]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="372">
+      <oldValue/>
+      <newValue><![CDATA[🌐]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="392">
+      <oldValue/>
+      <newValue><![CDATA[📚]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800075">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800076">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800077">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800078">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800079">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800080">
+      <oldValue/>
+      <newValue><![CDATA[📶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800081">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800108">
+      <oldValue/>
+      <newValue><![CDATA[✔️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800121">
+      <oldValue/>
+      <newValue><![CDATA[🏭]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800141">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800189">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800212">
+      <oldValue/>
+      <newValue><![CDATA[📦]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800233">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800234">
+      <oldValue/>
+      <newValue><![CDATA[🚧]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800237">
+      <oldValue/>
+      <newValue><![CDATA[🗂️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800238">
+      <oldValue/>
+      <newValue><![CDATA[🛠️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800239">
+      <oldValue/>
+      <newValue><![CDATA[🛠️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800240">
+      <oldValue/>
+      <newValue><![CDATA[💲]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800242">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800243">
+      <oldValue/>
+      <newValue><![CDATA[📦]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800244">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800245">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800247">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800248">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800249">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800250">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800251">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800252">
+      <oldValue/>
+      <newValue><![CDATA[📈]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800253">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800254">
+      <oldValue/>
+      <newValue><![CDATA[💶]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800255">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800256">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="800257">
+      <oldValue/>
+      <newValue><![CDATA[📉]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="1004400006">
+      <oldValue/>
+      <newValue><![CDATA[💡]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="06256C037E704AFAB11ACA3413B9C509">
+      <oldValue/>
+      <newValue><![CDATA[🗄️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="0E4EAC3AEECF45BC81680CFFC3D9F3D6">
+      <oldValue/>
+      <newValue><![CDATA[🤝]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="3A59F70F148D4BE49D38E9935CDFE3C7">
+      <oldValue/>
+      <newValue><![CDATA[💼]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="5B13FC397F814D188EF8A2479511FED3">
+      <oldValue/>
+      <newValue><![CDATA[🔗]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="5D501B7F2ED84F1ABCA21CF9D0409C4A">
+      <oldValue/>
+      <newValue><![CDATA[📑]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="71E5519B3FFF43AEA187A0A8207DFF90">
+      <oldValue/>
+      <newValue><![CDATA[🇪🇺]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="8C54E34A8D594B10865A86BDC2082EEE">
+      <oldValue/>
+      <newValue><![CDATA[🎨]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="C3805F4FAB2E491B8B18D5F6CB4F1737">
+      <oldValue/>
+      <newValue><![CDATA[⚙️]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="D13B4DBDCBF747BB9A91B17CBC6D1AA5">
+      <oldValue/>
+      <newValue><![CDATA[🕘]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="F11FC6C518B149AFAB4DAED58751119C">
+      <oldValue/>
+      <newValue><![CDATA[📊]]></newValue>
     </columnDataChange>
   </vector>
