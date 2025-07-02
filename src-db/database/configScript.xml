@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
   <vector>
-    <versionInfo version="24.2.6"/>
+    <versionInfo version="24.3.6"/>
     <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="153">
       <oldValue/>
       <newValue><![CDATA[📕]]></newValue>
@@ -288,5 +288,70 @@
     <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="F11FC6C518B149AFAB4DAED58751119C">
       <oldValue/>
       <newValue><![CDATA[📊]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="8DF818E471394C01A6546A4AB7F5E529">
+      <oldValue/>
+      <newValue><![CDATA[async (process, context) => {
+  const selectedRecords = context.selectedRecords;
+  const tabId = context?.tabId || '';
+
+  const values = Object.values(selectedRecords);
+
+  const documentStatuses = Array.from(new Set(values.map(record => record.documentStatus)));
+
+  const isProcessing = values.some(record => (record.processing || record.isprocessing || 'N') === 'Y') ? 'Y' : '';
+
+  const queryParams = new URLSearchParams({
+    _action: `${process.javaClassName}Defaults`,
+  });
+
+  const payload = {
+    documentStatuses,
+    isProcessing,
+    tabId,
+  };
+
+  const { ok, data, status } = await Metadata.kernelClient.post(`?${queryParams}`, payload);
+
+  if (!ok) {
+    throw new Error(`HTTP error! status: ${status}`);
+  }
+
+  return {
+    DocAction: data.actions,
+  };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="8DF818E471394C01A6546A4AB7F5E529">
+      <oldValue/>
+      <newValue><![CDATA[async (process, params) => {
+  const recordIds = params.recordIds;
+  const docAction = params.DocAction;
+  const windowId = params.windowId;
+  const entityName = params.entityName;
+
+  const queryParams = new URLSearchParams({
+    processId: process.id,
+    windowId,
+    _action: 'com.smf.jobs.defaults.ProcessOrders',
+  });
+
+  const payload = {
+    recordIds,
+    _buttonValue: params.buttonValue,
+    _params: {
+      DocAction: docAction,
+    },
+    _entityName: entityName,
+  };
+
+  const { ok, data, status } = await Metadata.kernelClient.post(`?${queryParams}`, payload);
+
+  if (!ok) {
+    throw new Error(`HTTP error! status: ${status}`);
+  }
+
+  return data;
+}]]></newValue>
     </columnDataChange>
   </vector>
