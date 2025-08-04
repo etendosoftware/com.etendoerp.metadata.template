@@ -5,12 +5,42 @@
 <!--27A3573BAAB24816AE019290FFBF977C-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
-<!--27A3573BAAB24816AE019290FFBF977C-->  <NAME><![CDATA[Main UI Template]]></NAME>
-<!--27A3573BAAB24816AE019290FFBF977C-->  <VERSION><![CDATA[1.0.0]]></VERSION>
-<!--27A3573BAAB24816AE019290FFBF977C-->  <DESCRIPTION><![CDATA[Metadata API Template]]></DESCRIPTION>
-<!--27A3573BAAB24816AE019290FFBF977C-->  <HELP><![CDATA[Metadata API Template]]></HELP>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <NAME><![CDATA[Metadata Template]]></NAME>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <VERSION><![CDATA[0.2.0]]></VERSION>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <DESCRIPTION><![CDATA[UI template foundation module that provides reusable components, layouts, and configuration templates for the new Etendo interface ecosystem. Defines standardized button types, toolbar configurations, field templates, and visual elements that ensure consi]]></DESCRIPTION>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <HELP><![CDATA[This module serves as the UI template foundation for Etendo's new interface architecture, providing standardized components and configuration templates that ensure consistency across all metadata-driven user interfaces.
+
+TEMPLATE COMPONENTS:
+- Button Templates: Defines standard button types (ACTION, DROPDOWN, MODAL, TOGGLE, CUSTOM) with consistent behavior patterns
+- Toolbar Configuration: Provides reusable toolbar section templates (left, center, right) with proper sequencing and organization
+- Field Layout Templates: Standardized field rendering templates for different data types and validation rules
+- Icon Management: Centralized icon definitions and visual element templates for consistent UI appearance
+- Configuration Modal Templates: Pre-built configuration interfaces for theme, density, and toolbar button display options
+- Process Definition Templates: Reusable templates for process execution workflows and parameter handling
+
+UI STANDARDIZATION:
+- Theme Templates: Light, dark, and automatic theme configurations with consistent color schemes
+- Density Options: Compact, standard, and comfortable layout density templates
+- Interface Scaling: Small, default, and large interface scale templates for accessibility
+- Responsive Design: Mobile-friendly templates that adapt to different screen sizes
+
+INTEGRATION FEATURES:
+- Metadata Synchronization: Templates automatically synchronize with backend metadata changes
+- Extensibility Framework: Allows custom template extensions while maintaining core consistency
+- Multi-language Support: Template labels and help text support internationalization
+- Role-based Templates: Different template configurations based on user roles and permissions
+
+DEPENDENCIES:
+Requires Etendo Core [25.1.0,25.3.0] for template processing and rendering support.
+
+USAGE:
+This module is automatically consumed by the metadata API module and provides the foundational templates for all UI components. Templates are referenced by metadata definitions to ensu]]></HELP>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <TYPE><![CDATA[T]]></TYPE>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <LICENSE><![CDATA[Licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.]]></LICENSE>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <JAVAPACKAGE><![CDATA[com.etendoerp.metadata.template]]></JAVAPACKAGE>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <LICENSETYPE><![CDATA[Apache2.0]]></LICENSETYPE>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <AUTHOR><![CDATA[Futit Services S.L.]]></AUTHOR>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <ISTRANSLATIONREQUIRED><![CDATA[N]]></ISTRANSLATIONREQUIRED>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <AD_LANGUAGE><![CDATA[en_US]]></AD_LANGUAGE>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <HASCHARTOFACCOUNTS><![CDATA[N]]></HASCHARTOFACCOUNTS>
@@ -18,6 +48,7 @@
 <!--27A3573BAAB24816AE019290FFBF977C-->  <HASREFERENCEDATA><![CDATA[Y]]></HASREFERENCEDATA>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <ISCOMMERCIAL><![CDATA[N]]></ISCOMMERCIAL>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <ISTRIALALLOWED><![CDATA[N]]></ISTRIALALLOWED>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <EM_ETRX_ISREACT><![CDATA[N]]></EM_ETRX_ISREACT>
 <!--27A3573BAAB24816AE019290FFBF977C--></AD_MODULE>
 
 </data>
