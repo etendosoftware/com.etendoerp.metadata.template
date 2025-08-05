@@ -7,7 +7,7 @@
 */
 
 group          = "com.etendoerp"
-version        = "0.2.0"
+version        = "0.3.0"
 description    = "UI template foundation module that provides reusable components, layouts, and configuration templates for the new Etendo interface ecosystem."
 ext.artifact   = "metadata.template"
 ext.repository = "https://maven.pkg.github.com/etendosoftware/com.etendoerp.platform.extensions"
