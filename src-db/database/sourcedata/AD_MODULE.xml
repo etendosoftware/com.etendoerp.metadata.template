@@ -6,7 +6,7 @@
 <!--27A3573BAAB24816AE019290FFBF977C-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <NAME><![CDATA[Metadata Template]]></NAME>
-<!--27A3573BAAB24816AE019290FFBF977C-->  <VERSION><![CDATA[0.3.0]]></VERSION>
+<!--27A3573BAAB24816AE019290FFBF977C-->  <VERSION><![CDATA[0.4.0]]></VERSION>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <DESCRIPTION><![CDATA[UI template foundation module that provides reusable components, layouts, and configuration templates for the new Etendo interface ecosystem. Defines standardized button types, toolbar configurations, field templates, and visual elements that ensure consi]]></DESCRIPTION>
 <!--27A3573BAAB24816AE019290FFBF977C-->  <HELP><![CDATA[This module serves as the UI template foundation for Etendo's new interface architecture, providing standardized components and configuration templates that ensure consistency across all metadata-driven user interfaces.
 
