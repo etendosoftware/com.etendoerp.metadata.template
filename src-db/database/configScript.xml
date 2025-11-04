@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
   <vector>
-    <versionInfo version="25.2.6"/>
+    <versionInfo version="25.2.7"/>
     <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="153">
       <oldValue/>
       <newValue><![CDATA[PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMCAxSDYuNUM1LjU3IDEgNC42OCAxLjM3IDQuMDMgMi4wM0MzLjM4IDIuNjkgMyAzLjU3IDMgNC41VjE5LjVDMyAyMC40MyAzLjM3IDIxLjMyIDQuMDMgMjEuOTdDNC42OSAyMi42MyA1LjU4IDIzIDYuNSAyM0gyMEMyMC41NSAyMyAyMSAyMi41NSAyMSAyMlYyQzIxIDEuNDUgMjAuNTUgMSAyMCAxWk01LjQ0IDMuNDRDNS43MiAzLjE2IDYuMSAzIDYuNSAzSDE5VjE2SDYuNUM1Ljk3IDE2IDUuNDcgMTYuMTMgNSAxNi4zNVY0LjVDNSA0LjEgNS4xNiAzLjcyIDUuNDQgMy40NFpNNi41IDIxQzYuMSAyMSA1LjcyIDIwLjg0IDUuNDQgMjAuNTZDNS4xNiAyMC4yOCA1IDE5LjkgNSAxOS41QzUgMTkuMSA1LjE2IDE4LjcyIDUuNDQgMTguNDRDNS43MiAxOC4xNiA2LjEgMTggNi41IDE4SDE5VjIxSDYuNVoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=]]></newValue>
@@ -372,6 +372,36 @@
   }
 
   return data;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="ISCANADDRECORDSTOSELECTOR" pkRow="9BED7889E1034FE68BD85D5D16857320">
+      <oldValue><![CDATA[Y]]></oldValue>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="9BED7889E1034FE68BD85D5D16857320">
+      <oldValue/>
+      <newValue><![CDATA[async (process, payload) => {
+  try {
+    const selectedRecords = payload.selectedRecords || [];
+    
+    if (!selectedRecords || selectedRecords.length === 0) {
+      return {};
+    }
+
+    return {
+      autoSelectConfig: {
+        table: 'order_invoice',
+        logic: {
+          field: 'salesOrderNo',
+          operator: '=',
+          valueFromContext: 'documentNo'
+        }
+      }
+    };
+  } catch (error) {
+    console.error('Error en onLoad:', error);
+    return {};
+  }
 }]]></newValue>
     </columnDataChange>
   </vector>
