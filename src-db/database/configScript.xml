@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
   <vector>
-    <versionInfo version="25.2.7"/>
+    <versionInfo version="25.3.0"/>
     <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="153">
       <oldValue/>
       <newValue><![CDATA[PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMCAxSDYuNUM1LjU3IDEgNC42OCAxLjM3IDQuMDMgMi4wM0MzLjM4IDIuNjkgMyAzLjU3IDMgNC41VjE5LjVDMyAyMC40MyAzLjM3IDIxLjMyIDQuMDMgMjEuOTdDNC42OSAyMi42MyA1LjU4IDIzIDYuNSAyM0gyMEMyMC41NSAyMyAyMSAyMi41NSAyMSAyMlYyQzIxIDEuNDUgMjAuNTUgMSAyMCAxWk01LjQ0IDMuNDRDNS43MiAzLjE2IDYuMSAzIDYuNSAzSDE5VjE2SDYuNUM1Ljk3IDE2IDUuNDcgMTYuMTMgNSAxNi4zNVY0LjVDNSA0LjEgNS4xNiAzLjcyIDUuNDQgMy40NFpNNi41IDIxQzYuMSAyMSA1LjcyIDIwLjg0IDUuNDQgMjAuNTZDNS4xNiAyMC4yOCA1IDE5LjkgNSAxOS41QzUgMTkuMSA1LjE2IDE4LjcyIDUuNDQgMTguNDRDNS43MiAxOC4xNiA2LjEgMTggNi41IDE4SDE5VjIxSDYuNVoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=]]></newValue>
@@ -309,6 +309,10 @@
       <oldValue/>
       <newValue><![CDATA[#008000]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="AD_MODULE" columnname="VERSION" pkRow="27A3573BAAB24816AE019290FFBF977C">
+      <oldValue><![CDATA[0.8.0]]></oldValue>
+      <newValue><![CDATA[0.8.1]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="8DF818E471394C01A6546A4AB7F5E529">
       <oldValue/>
       <newValue><![CDATA[async (process, context) => {
@@ -610,5 +614,46 @@
     return validations;
   },
 };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[export const FundsTransferRules = {
+  compute: (context, util) => {
+
+      const description = util.valStr("description");
+      
+      const currencyId = util.val("c_currency_from_id") || util.val("Currency From") || util.val("inpcCurrencyId") || util.val("c_currency_id");
+      const currencyIdentifier = util.val("Currency From$_identifier") || util.val("currency$_identifier") || util.val("c_currency_id_identifier");
+
+      // Default description logic
+      let newDescription = description;
+      if (!newDescription) {
+        newDescription = "Funds Transfer Transaction"; 
+      }
+
+      const updates = {
+         description: newDescription
+      };
+
+      if (currencyId) {
+          if (currencyIdentifier) {
+              updates.c_currency_to_id = { id: currencyId, identifier: currencyIdentifier }; 
+          } else {
+              updates.c_currency_to_id = currencyId;
+          }
+      }
+
+      return updates;
+    },
+
+    validate: (context, computed, util) => {
+      const validations = [];
+      return validations;
+    }
+};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
   </vector>
