@@ -309,10 +309,6 @@
       <oldValue/>
       <newValue><![CDATA[#008000]]></newValue>
     </columnDataChange>
-    <columnDataChange tablename="AD_MODULE" columnname="VERSION" pkRow="27A3573BAAB24816AE019290FFBF977C">
-      <oldValue><![CDATA[0.8.0]]></oldValue>
-      <newValue><![CDATA[0.8.1]]></newValue>
-    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="8DF818E471394C01A6546A4AB7F5E529">
       <oldValue/>
       <newValue><![CDATA[async (process, context) => {
