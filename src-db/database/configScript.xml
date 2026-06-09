@@ -676,4 +676,52 @@
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="5DEFDAF5A8A2415A8181879698236A38">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const ORG_FIELD = 'AD_Org_ID';
+  const CURRENCY_FIELD = 'C_Currency_ID';
+  const ACTION_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.AddPaymentOrganizationActionHandler';
+
+  const orgItem = form.getItem(ORG_FIELD);
+  const organization = orgItem ? orgItem.getValue() : '';
+
+  if (!organization) {
+    console.log("There is no organization");
+    console.log("organization: ", organization);
+    return;
+  }
+
+  const callback = (response, data) => {
+    console.log("response: ", response);
+    console.log("data: ", data);
+    const currencyItem = form.getItem(CURRENCY_FIELD);
+    currencyItem.setValue(data.currency);
+
+    const valueMap = currencyItem.getValueMap() || [];
+    const nextMap = valueMap.filter((option) => option.value !== data.currency);
+    nextMap.push({
+      id: data.currency,
+      value: data.currency,
+      label: data.currencyIdIdentifier,
+    });
+    currencyItem.setValueMap(nextMap);
+
+    form.redraw();
+  };
+
+  OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="8F67EA025A144F7D8639F972F0710056">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const orderGrid = form.getItem('orderGrid').canvas.viewGrid;
+  const newCriteria = orderGrid.addSelectedIDsToCriteria(orderGrid.getCriteria(), true);
+  newCriteria.criteria = newCriteria.criteria || [];
+  orderGrid.invalidateCache();
+  form.redraw();
+}]]></newValue>
+    </columnDataChange>
   </vector>
