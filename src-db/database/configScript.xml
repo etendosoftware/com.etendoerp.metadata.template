@@ -309,6 +309,114 @@
       <oldValue/>
       <newValue><![CDATA[#008000]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="20D69FFD251A481BA75F33538EDFCF76">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const accountsGrid = () => view.theForm.getItem(ACCOUNTS_PARAM).canvas.viewGrid;
+
+  accountsGrid().hide();
+
+  OB.Utilities.Action.set('showVATGrid', () => {
+    accountsGrid().show();
+  });
+
+  OB.Utilities.Action.set('updateVATTotal', (paramObj) => {
+    view.theForm.getItem(AMOUNT_PARAM).setValue(paramObj.amount);
+  });
+
+  OB.Utilities.Action.set('updateVATLines', (paramObj) => {
+    state.lines = paramObj;
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="20D69FFD251A481BA75F33538EDFCF76">
+      <oldValue/>
+      <newValue><![CDATA[const ACCOUNTS_PARAM = 'Accounts';
+const AMOUNT_PARAM = 'amount';
+const AMOUNT_COLUMN = 'amt';
+
+const state = { lines: null };
+
+const sumAccountAmount = (rowId) => {
+  const lines = state.lines;
+  if (!lines || !Array.isArray(lines.accounts)) {
+    return null;
+  }
+  const matching = lines.accounts.filter((account) => account.id === rowId);
+  if (matching.length === 0) {
+    return null;
+  }
+  return matching.reduce((total, account) => total + parseFloat(account.amt), 0);
+};
+
+return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="20D69FFD251A481BA75F33538EDFCF76">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="272C8D38EF3245BF882E623CE92AB4E7">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="272C8D38EF3245BF882E623CE92AB4E7">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  view.messageBar.setMessage("info", null, OB.I18N.getLabel("CostingRuleHelp"));
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const PRECHECK_HANDLER = "org.openbravo.costing.CostingRuleProcessOnProcessHandler";
+  const EXECUTE_HANDLER = "org.openbravo.costing.CostingRuleProcessActionHandler";
+  view.messageBar.setMessage("info", null, OB.I18N.getLabel("CostingRuleHelp"));
+  const ruleId = view.recordIds && view.recordIds[0];
+  const runExecution = async () => {
+    const response = await callAction(EXECUTE_HANDLER, { M_Costing_Rule_ID: ruleId }, { queryParams: { processId: process.id } });
+    return response.data && response.data.message;
+  };
+  const precheck = await callAction(PRECHECK_HANDLER, { ruleId });
+  const precheckMessage = precheck.data && precheck.data.message;
+  const confirmText = precheckMessage && precheckMessage.text;
+  if (!confirmText) {
+    return await runExecution();
+  }
+  const accepted = await confirm(confirmText);
+  if (!accepted) {
+    return { severity: "info", text: "" };
+  }
+  return await runExecution();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="4CE463C04CA0412CAC57EF58FE0F8498">
+      <oldValue/>
+      <newValue><![CDATA[(() => {})]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="4CE463C04CA0412CAC57EF58FE0F8498">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="4CE463C04CA0412CAC57EF58FE0F8498">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="71E00A0E964E43AE81C5AFBCDCA5F87C">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="8DF818E471394C01A6546A4AB7F5E529">
       <oldValue/>
       <newValue><![CDATA[async (process, context) => {
@@ -635,46 +743,107 @@
   },
 };]]></newValue>
     </columnDataChange>
-    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="CC73C4845CDC487395804946EACB225F">
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="B5C942145F354ABEBC9F16235D80D776">
       <oldValue/>
-      <newValue><![CDATA[export const FundsTransferRules = {
-  compute: (context, util) => {
+      <newValue><![CDATA[async (process, view) => {
+  const GL_ITEM_PARAM = 'c_glitem_id';
+  const HANDLER = 'org.openbravo.common.actionhandler.CheckAvailableCreditActionHandler';
+  const form = view.theForm;
+  const context = view.parentWindow.view.getContextInfo();
+  const businessPartnerId = context.C_BPartner_ID || context.inpcBpartnerId;
+  // The Currency parameter defaults to the BP currency (@BP_Currency_ID@). Its form value may
+  // not be synced yet when onLoad runs, so fall back to the launching record's currency from the
+  // context (keyed by inputName, e.g. inpbpCurrencyId — the same key onProcess reads). `null`
+  // (not undefined) keeps the key in the JSON payload; the handler treats null/empty as
+  // availableCredit:false. Classic always sends the key.
+  const currencyId = form.getItem('C_Currency_ID').getValue() || context.inpbpCurrencyId || null;
+  const glItem = form.getItem(GL_ITEM_PARAM);
 
-      const description = util.valStr("description");
-      
-      const currencyId = util.val("c_currency_from_id") || util.val("Currency From") || util.val("inpcCurrencyId") || util.val("c_currency_id");
-      const currencyIdentifier = util.val("Currency From$_identifier") || util.val("currency$_identifier") || util.val("c_currency_id_identifier");
-
-      // Default description logic
-      let newDescription = description;
-      if (!newDescription) {
-        newDescription = "Funds Transfer Transaction"; 
-      }
-
-      const updates = {
-         description: newDescription
-      };
-
-      if (currencyId) {
-          if (currencyIdentifier) {
-              updates.c_currency_to_id = { id: currencyId, identifier: currencyIdentifier }; 
-          } else {
-              updates.c_currency_to_id = currencyId;
-          }
-      }
-
-      return updates;
-    },
-
-    validate: (context, computed, util) => {
-      const validations = [];
-      return validations;
+  const callback = (response, data) => {
+    if (data.availableCredit) {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_WARNING, null, OB.I18N.getLabel('BPCurrencyChange'));
+      glItem.show();
+      glItem.setRequired(true);
+    } else {
+      glItem.hide();
     }
-};]]></newValue>
+    form.redraw();
+    view.handleButtonsStatus();
+  };
+
+  OB.RemoteCallManager.call(HANDLER, {
+    businessPartnerId: businessPartnerId,
+    currencyId: currencyId
+  }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const form = view.theForm;
+  const context = view.parentWindow.view.getContextInfo();
+  const currencyFromId = context.inpbpCurrencyId;
+  const currencyToId = form.getItem('C_Currency_ID').getValue();
+  const glItemId = form.getItem('c_glitem_id').getValue();
+  const setAmount = form.getItem('Amount').getValue();
+  const currentBalance = context.inpsoCreditused;
+  const foreignAmount = form.getItem('Foreign_Amount').getValue();
+
+  if (currencyFromId !== currencyToId && glItemId && setAmount === true && currentBalance === 0 && foreignAmount !== 0) {
+    const text = OB.I18N.getLabel('BPCurrencyChangeRate');
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text };
+  }
+
+  const response = await view.executeProcess();
+  return response && response.message;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const label = OB.I18N.getLabel('FundsTransfer');
+  view.theForm.getItem('description').setValue(label);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="CC73C4845CDC487395804946EACB225F">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="3E36DA70B20648AD84912421320F4DDE">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const ORG_FIELD = 'AD_Org_ID';
+  const ACTION_HANDLER =
+    'com.etendoerp.verifactu.action_handler.AddOrganizationInfoActionHandler';
+
+  const orgItem = form.getItem(ORG_FIELD);
+  const organization = orgItem ? orgItem.getValue() : '';
+
+  if (organization === '') {
+    return;
+  }
+
+  const callback = (response, data) => {
+    form.getItem('LegalName').setValue(data.legalName);
+    form.getItem('NIF').setValue(data.nif);
+    form.redraw();
+  };
+
+  OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
+}]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="5DEFDAF5A8A2415A8181879698236A38">
       <oldValue/>
@@ -722,6 +891,59 @@
   newCriteria.criteria = newCriteria.criteria || [];
   orderGrid.invalidateCache();
   form.redraw();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="E5808EFB574A4416BEB04EBBB0F2C9E8">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  try {
+    const rows = grid.data.allRows;
+    rows.forEach((row, index) => {
+      const total = sumAccountAmount(row.id);
+      if (total !== null) {
+        grid.setEditValue(index, AMOUNT_COLUMN, total);
+      }
+    });
+  } catch (error) {
+    console.error('Error during matching:', error);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="F4029E7726074FF2B6D3B59AE3072711">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.FundsTransferOnChangeDepositToActionHandler';
+
+  const callback = (response, data) => {
+    if (!data || !data.currencyID) {
+      return;
+    }
+    const currencyTo = form.getItem('c_currency_to_id');
+    currencyTo.setValueFromRecord({
+      id: data.currencyID,
+      _identifier: data.currencyISO
+    });
+    form.redraw();
+  };
+
+  OB.RemoteCallManager.call(HANDLER, { accountID: item.getValue() }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FBFD6C5F59754807B93171ABA9EC6A58">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const RECIPIENT_FIELD = 'recipient_id';
+  const recipientItem = form.getItem(RECIPIENT_FIELD);
+  const recipientID = recipientItem ? recipientItem.getValue() : '';
+
+  if (recipientID === '') {
+    return;
+  }
+
+  const severity = OB.MessageBar.TYPE_WARNING;
+  const message = OB.I18N.getLabel('ETVFAC_DATA_ID_ISEMPTY');
+  view.messageBar.setMessage(severity, severity.toUpperCase(), message);
 }]]></newValue>
     </columnDataChange>
   </vector>
