@@ -309,6 +309,70 @@
       <oldValue/>
       <newValue><![CDATA[#008000]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="154CB4F9274A479CB38A285E16984539">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const HIDE_POPUP_PROPERTY = 'APRM_MATCHSTATEMENT_HIDE_PARTIALMATCH_POPUP';
+  const NO_RECORD_LABEL = 'APRM_SELECT_RECORD_ERROR';
+  const SPLIT_CONFIRM_LABEL = 'APRM_SplitBankStatementLineConfirm';
+
+  const formatAmount = (amount) =>
+    OB.Utilities.Number.JSToOBMasked(
+      amount,
+      OB.Format.defaultNumericMask,
+      OB.Format.defaultDecimalSymbol,
+      OB.Format.defaultGroupingSymbol,
+      OB.Format.defaultGroupingSize
+    );
+
+  const contextInfo = view.getContextInfo();
+  const trxParameter = contextInfo && contextInfo.findtransactiontomatch;
+  const trxSelection = trxParameter && trxParameter._selection;
+
+  if (!trxSelection || !trxSelection[0]) {
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_ERROR,
+      null,
+      OB.I18N.getLabel(NO_RECORD_LABEL)
+    );
+    return { severity: 'error', text: OB.I18N.getLabel(NO_RECORD_LABEL) };
+  }
+
+  const blineAmt = new BigDecimal(String(view.callerField.record.amount));
+  let totalTrxAmt = BigDecimal.prototype.ZERO;
+  for (const trx of trxSelection) {
+    const trxDepositAmt = new BigDecimal(String(trx.depositAmount));
+    const trxPaymentAmt = new BigDecimal(String(trx.paymentAmount));
+    totalTrxAmt = totalTrxAmt.add(trxDepositAmt.subtract(trxPaymentAmt));
+  }
+
+  const splitRequired = totalTrxAmt.compareTo(blineAmt) !== 0;
+  if (!splitRequired) {
+    return (await view.executeProcess())?.message;
+  }
+
+  const hideSplitConfirmation =
+    OB.PropertyStore.get(HIDE_POPUP_PROPERTY, view.windowId) === 'Y';
+  if (hideSplitConfirmation) {
+    return (await view.executeProcess())?.message;
+  }
+
+  const confirmed = await confirm(
+    OB.I18N.getLabel(SPLIT_CONFIRM_LABEL, [
+      formatAmount(blineAmt),
+      formatAmount(totalTrxAmt)
+    ])
+  );
+  if (!confirmed) {
+    return { severity: 'error', text: '' };
+  }
+  return (await view.executeProcess())?.message;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="154CB4F9274A479CB38A285E16984539">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="20D69FFD251A481BA75F33538EDFCF76">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -743,6 +807,20 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   },
 };]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="AB2EFCAABB7B4EC0A9B30CFB82963FB6">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  view.messageBar.setMessage(
+    isc.OBMessageBar.TYPE_INFO,
+    null,
+    OB.I18N.getLabel('CreateFromMatchPOQtys')
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="AB2EFCAABB7B4EC0A9B30CFB82963FB6">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="B5C942145F354ABEBC9F16235D80D776">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -807,6 +885,10 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C88AB6CBA1694000AFF5706A31B08AE1">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="CC73C4845CDC487395804946EACB225F">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -821,6 +903,122 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="CC73C4845CDC487395804946EACB225F">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="0981CFAA3B244E3C8CDF439626D4B352">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const SHOW_DATES_HANDLER =
+    "com.etendoerp.financial.reports.advanced.handler.ShowDatesField";
+  const balanceFields = ["CurrentDate", "AsOfReferenceDate", "AsOfReferenceDate2", "AsOfReferenceDate3"];
+  const rangeFields = [
+    "FromRefDate",
+    "ToRefDate",
+    "DateFrom",
+    "DateTo",
+    "FromRefDate2",
+    "ToRefDate2",
+    "FromRefDate3",
+    "ToRefDate3",
+  ];
+
+  const setVisibility = (fieldNames, visible) => {
+    fieldNames.forEach((fieldName) => {
+      const field = form.getItem(fieldName);
+      if (field) {
+        if (visible) {
+          field.show();
+        } else {
+          field.hide();
+        }
+      }
+    });
+  };
+
+  const balanceValue = form.getItem("C_Acct_Rpt_ID").getValue();
+
+  const hideFields = (response, data) => {
+    if (data.balance) {
+      setVisibility(rangeFields, false);
+      setVisibility(balanceFields, true);
+    } else {
+      setVisibility(balanceFields, false);
+      setVisibility(rangeFields, true);
+    }
+  };
+
+  OB.RemoteCallManager.call(SHOW_DATES_HANDLER, { balanceValue: balanceValue }, {}, hideFields);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="1EE24A173A464164B46519D7FDA3A667">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const CHANGE_ACCT_SCHEMA_HANDLER =
+    "com.etendoerp.financial.reports.advanced.handler.ChangeAcctSchemaActionHandler";
+  const GENERAL_LEDGER_FIELD = "GL_Journal_ID";
+
+  const organization = item.getValue() ? item.getValue() : "";
+
+  const setAcctSchema = (response, data) => {
+    const generalLedger = form.getItem(GENERAL_LEDGER_FIELD);
+    if (generalLedger) {
+      generalLedger.setValueFromRecord({
+        id: data.acctSchema,
+        _identifier: data.acctSchemaIdIdentifier,
+      });
+    }
+  };
+
+  if (organization !== "") {
+    OB.RemoteCallManager.call(
+      CHANGE_ACCT_SCHEMA_HANDLER,
+      { organization: organization },
+      {},
+      setAcctSchema
+    );
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="30801BEAD1CF413D9B2B689CBC641D12">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="3325FBE7ACEE4215B07D6C67CFF7808B">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="3E36DA70B20648AD84912421320F4DDE">
       <oldValue/>
@@ -843,6 +1041,48 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   };
 
   OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="4F7E3F7DEF3E41BA81566E6063AB5920">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="52D6D4EC93C44226B6F2CEC5366A709D">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="5DEFDAF5A8A2415A8181879698236A38">
@@ -883,6 +1123,70 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="72ED21539E4541DF91D6EC779373451F">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const CHANGE_ACCT_SCHEMA_HANDLER =
+    "com.etendoerp.financial.reports.advanced.handler.ChangeAcctSchemaActionHandler";
+  const GENERAL_LEDGER_FIELD = "GL_Journal_ID";
+
+  const organization = item.getValue() ? item.getValue() : "";
+
+  const setAcctSchema = (response, data) => {
+    const generalLedger = form.getItem(GENERAL_LEDGER_FIELD);
+    if (generalLedger) {
+      generalLedger.setValueFromRecord({
+        id: data.acctSchema,
+        _identifier: data.acctSchemaIdIdentifier,
+      });
+    }
+  };
+
+  if (organization !== "") {
+    OB.RemoteCallManager.call(
+      CHANGE_ACCT_SCHEMA_HANDLER,
+      { organization: organization },
+      {},
+      setAcctSchema
+    );
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="8DCE4BE2821E4638B318EC44A019D618">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const ZERO = new BigDecimal('0');
+  const SCALE = 2;
+  const currencyIsoAttribute = 'currency' + OB.Constants.FIELDSEPARATOR + OB.Constants.IDENTIFIER;
+  const totals = {};
+  const selectedRecords = grid.getSelectedRecords();
+  for (let i = 0; i < selectedRecords.length; i++) {
+    const record = selectedRecords[i];
+    const currencyIso = record[currencyIsoAttribute];
+    let recordAmount = record.amount;
+    if (!record.receipt) {
+      recordAmount = -recordAmount;
+    }
+    if (!totals[currencyIso]) {
+      totals[currencyIso] = ZERO;
+    }
+    totals[currencyIso] = totals[currencyIso].add(new BigDecimal(recordAmount.toString())).setScale(SCALE);
+    if (totals[currencyIso].compareTo(ZERO) === 0) {
+      delete totals[currencyIso];
+    }
+  }
+  let total = '';
+  for (const currencyIso in totals) {
+    if (Object.prototype.hasOwnProperty.call(totals, currencyIso)) {
+      total += totals[currencyIso].toString() + ' ' + currencyIso + ' ';
+    }
+  }
+  if (!total) {
+    total = '0';
+  }
+  grid.view.theForm.getItem('total').setValue(total);
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="8F67EA025A144F7D8639F972F0710056">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -891,6 +1195,99 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   newCriteria.criteria = newCriteria.criteria || [];
   orderGrid.invalidateCache();
   form.redraw();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="97DA0EA642004F0BA82A5189A5851CF3">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const organization = form.getItem('Organization');
+  const gl = form.getItem('AccSchema');
+  OB.RemoteCallManager.call(
+    'org.openbravo.common.actionhandler.AgingGeneralLedgerByOrganizationActionHandler',
+    { organization: organization.getValue() },
+    {},
+    (response, data, request) => {
+      gl.setValueFromRecord({ id: data.response.value, _identifier: data.response.identifier });
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="98C448272CC34741818BA0403C93C78E">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="9D15FF5AF4424434B328F4B6FFC14482">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="D6991F7834DD4073AC4E5F72A8A5065D">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const organization = form.getItem('Organization');
+  const gl = form.getItem('AccSchema');
+  OB.RemoteCallManager.call(
+    'org.openbravo.common.actionhandler.AgingGeneralLedgerByOrganizationActionHandler',
+    { organization: organization.getValue() },
+    {},
+    (response, data, request) => {
+      gl.setValueFromRecord({ id: data.response.value, _identifier: data.response.identifier });
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="DEC3B66EB67A401B95B394EEC6D09A82">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="E5808EFB574A4416BEB04EBBB0F2C9E8">
@@ -907,6 +1304,39 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   } catch (error) {
     console.error('Error during matching:', error);
   }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="EB23EC23944345D2BA7A10320703212C">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const DIMENSION_FIELDS = [
+    "FromAccount",
+    "ToAccount",
+    "BusinessPartner",
+    "product",
+    "c_project",
+    "groupBy",
+    "includeZeroFigures",
+  ];
+  const SUMMARY_LEVEL = "S";
+
+  const setVisibility = (fieldNames, visible) => {
+    fieldNames.forEach((fieldName) => {
+      const field = form.getItem(fieldName);
+      if (field) {
+        if (visible) {
+          field.show();
+        } else {
+          field.hide();
+        }
+      }
+    });
+  };
+
+  const accountLevelItem = form.getItem("AccountLevel");
+  const accountLevel = accountLevelItem ? accountLevelItem.getValue() : null;
+
+  setVisibility(DIMENSION_FIELDS, accountLevel === SUMMARY_LEVEL);
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="F4029E7726074FF2B6D3B59AE3072711">
@@ -930,6 +1360,49 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   OB.RemoteCallManager.call(HANDLER, { accountID: item.getValue() }, {}, callback);
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FA3B7681559342D392EDCB96C9A38552">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const DOCUMENT_NO_FIELD = "DocumentNo";
+  const SHOW_DOCUMENT_NO_FIELD = "showDocumentNo";
+  const DOCUMENT_TYPES_WITHOUT_DOC_NO = [
+    "361",
+    "304",
+    "305",
+    "362",
+    "306",
+    "307",
+    "8D951A5E22934A819342B97E5755D063",
+    "12CD29ED0686428DACEF24B5040A8EA5",
+    "21C51C14E7E14F05AE98A0DCFF569C66",
+    "8E2E3976B54A46D58752619DDA78E35E",
+    "302",
+    "257F25CAB32A4009AA45EFCE2ADE5F1C",
+    "88BE65DDD6064F25A1837009F7375210",
+  ];
+
+  const selectedTypes = item.getValue();
+  const documentNo = form.getItem(DOCUMENT_NO_FIELD);
+  const showDocumentNo = form.getItem(SHOW_DOCUMENT_NO_FIELD);
+
+  const getSelectedValue = (values) =>
+    values && typeof values.get === "function" ? values.get(0) : values && values[0];
+
+  const isSingleSupportedType =
+    selectedTypes &&
+    selectedTypes.length === 1 &&
+    DOCUMENT_TYPES_WITHOUT_DOC_NO.includes(getSelectedValue(selectedTypes));
+
+  if (isSingleSupportedType) {
+    showDocumentNo.setValue(false);
+    documentNo.setDisabled(false);
+  } else {
+    showDocumentNo.setValue(true);
+    documentNo.setDisabled(true);
+    documentNo.clearValue();
+  }
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FBFD6C5F59754807B93171ABA9EC6A58">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -944,6 +1417,27 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   const severity = OB.MessageBar.TYPE_WARNING;
   const message = OB.I18N.getLabel('ETVFAC_DATA_ID_ISEMPTY');
   view.messageBar.setMessage(severity, severity.toUpperCase(), message);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FC9ABA9B85B04AF492CF3A17D84190DA">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
 }]]></newValue>
     </columnDataChange>
   </vector>
