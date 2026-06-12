@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
   <vector>
-    <versionInfo version="25.3.0"/>
+    <versionInfo version="26.1.7"/>
     <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="153">
       <oldValue/>
       <newValue><![CDATA[PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMCAxSDYuNUM1LjU3IDEgNC42OCAxLjM3IDQuMDMgMi4wM0MzLjM4IDIuNjkgMyAzLjU3IDMgNC41VjE5LjVDMyAyMC40MyAzLjM3IDIxLjMyIDQuMDMgMjEuOTdDNC42OSAyMi42MyA1LjU4IDIzIDYuNSAyM0gyMEMyMC41NSAyMyAyMSAyMi41NSAyMSAyMlYyQzIxIDEuNDUgMjAuNTUgMSAyMCAxWk01LjQ0IDMuNDRDNS43MiAzLjE2IDYuMSAzIDYuNSAzSDE5VjE2SDYuNUM1Ljk3IDE2IDUuNDcgMTYuMTMgNSAxNi4zNVY0LjVDNSA0LjEgNS4xNiAzLjcyIDUuNDQgMy40NFpNNi41IDIxQzYuMSAyMSA1LjcyIDIwLjg0IDUuNDQgMjAuNTZDNS4xNiAyMC4yOCA1IDE5LjkgNSAxOS41QzUgMTkuMSA1LjE2IDE4LjcyIDUuNDQgMTguNDRDNS43MiAxOC4xNiA2LjEgMTggNi41IDE4SDE5VjIxSDYuNVoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=]]></newValue>
@@ -409,6 +409,24 @@
       <newValue><![CDATA[export const AddPaymentRulesGeneric = {
   id: "APRM_ADD_PAYMENT_V1",
 
+  // Synchronous UI-level reactive rules, applied by WindowReferenceGrid in the
+  // same React update cycle as the cell edit. Mirrors classic
+  // OB.APRM.AddPayment.glItemAmountOnChange: in the GL Items grid, received_in
+  // and paid_out are mutually exclusive — entering a non-zero value in one
+  // forces the other to 0 on the same row.
+  //
+  // Declaring both DB (received_in/paid_out) and HQL (receivedIn/paidOut)
+  // pairs keeps matching robust because GridCellEditor mirrors writes to both
+  // keys on row.original, but onRecordChange only carries the HQL key.
+  fieldInteractions: {
+    glitem: {
+      mutualExclusion: [
+        ["received_in", "paid_out"],
+        ["receivedIn", "paidOut"],
+      ],
+    },
+  },
+
   compute: (_context, util) => {
     const actualPayment = util.valNum("actual_payment", "actualPayment", "ActualPayment");
     const invoices = util.getGridItems(["amount", "outstandingAmount"], ["order_invoice"]);
@@ -419,7 +437,6 @@
       isSOTrx = true;
     }
 
-    const amountGLItemsValue = util.valNum("amount_gl_items", "amountGlItems", "AmountGlItems");
     const usedCreditValue = util.valNum("used_credit", "usedCredit", "UsedCredit");
     const conversionRate = util.valNum("conversion_rate", "conversionRate", "finPaymentRate") || 1;
     const currencyPrecision = util.valNum("currency_precision", "currencyPrecision") || 2;
@@ -430,14 +447,14 @@
     const currencyId = util.valStr("currency_id", "currencyId", "c_currency_id");
     const currencyToId = util.valStr("currency_to_id", "currencyToId", "finPaymentCurrency");
 
-    const glItems = [];
-    if (amountGLItemsValue !== 0) {
-      glItems.push({
-        id: "manual",
-        receivedIn: isSOTrx ? amountGLItemsValue : 0,
-        paidOut: isSOTrx ? 0 : amountGLItemsValue,
-      });
-    }
+    // "glitem" is the dBColumnName of the Window Reference parameter for GL Items.
+    // We read _allRows (not _selection) because the grid has obuiappShowSelect=false:
+    // every row is meaningful input, equivalent to OB.APRM.AddPayment.updateGLItemsTotal
+    // iterating grid.data.allRows in the classic UI.
+    const glItems = util.getAllGridRows(
+      ["received_in", "paid_out", "receivedIn", "paidOut"],
+      ["glitem"]
+    );
 
     const creditItems = util.getGridItems(["paymentAmount", "outstandingAmount"], ["credit_to_use"]);
     let usedCreditCalculated = util.num(0);
@@ -464,9 +481,11 @@
 
     const amountInvOrds = util.sum(invoices, "amount");
 
-    const amountGLItems = glItems.reduce((total, item) => {
-      const receivedIn = util.num(item.receivedIn || 0);
-      const paidOut = util.num(item.paidOut || 0);
+    const amountGLItems = glItems.reduce((total, row) => {
+      // Accept both DB ("received_in"/"paid_out") and HQL ("receivedIn"/"paidOut")
+      // shapes — the new UI's GridCellEditor mirrors writes to both keys.
+      const receivedIn = util.num(row.received_in ?? row.receivedIn ?? 0);
+      const paidOut = util.num(row.paid_out ?? row.paidOut ?? 0);
       if (isSOTrx) {
         return total.plus(receivedIn).minus(paidOut);
       }
@@ -526,6 +545,11 @@
       AmountInvOrds: fmt(amountInvOrds),
       "Amount on Invoices and/or Orders": fmt(amountInvOrds),
       "Amount Inv Ords": fmt(amountInvOrds),
+
+      amount_gl_items: fmt(amountGLItems),
+      amountGlItems: fmt(amountGLItems),
+      AmountGlItems: fmt(amountGLItems),
+      "Amount on GL Items": fmt(amountGLItems),
 
       total: fmt(total),
       Total: fmt(total),
