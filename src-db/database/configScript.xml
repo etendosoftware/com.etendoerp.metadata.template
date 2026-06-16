@@ -419,6 +419,62 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="272C8D38EF3245BF882E623CE92AB4E7">
+      <oldValue/>
+      <newValue><![CDATA[(_process, view) => {
+  const INVOICE_DEFAULTS_HANDLER = 'com.smf.jobs.defaults.ProcessInvoicesDefaults';
+  const INVOICE_TABLE_ID = '318';
+  const form = view.theForm;
+  const docActionField = form.getItem('DocAction');
+  const voidDateField = form.getItem('VoidDate');
+  const voidAcctDateField = form.getItem('VoidAccountingDate');
+  const supplierReferenceField = form.getItem('POReference');
+  const selectedRecords = view.selectedRecords || [];
+  const documentStatuses = [];
+  const documentActions = [];
+
+  for (let i = 0; i < selectedRecords.length; i++) {
+    const record = selectedRecords[i];
+    if (!documentStatuses.includes(record.documentStatus)) {
+      documentStatuses.push(record.documentStatus);
+    }
+    if (!documentActions.includes(record.documentAction)) {
+      documentActions.push(record.documentAction);
+    }
+  }
+
+  voidDateField.hide();
+  voidAcctDateField.hide();
+  supplierReferenceField.hide();
+
+  OB.RemoteCallManager.call(
+    INVOICE_DEFAULTS_HANDLER,
+    { documentStatuses: documentStatuses, isProcessing: '', tableId: INVOICE_TABLE_ID },
+    {},
+    (response, data, request) => {
+      const actions = data.actions || [];
+      const currentValues = docActionField.getValueMap();
+      const newValues = {};
+
+      for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
+        const match = currentValues.find((option) => option.value === action || option.id === action);
+        if (match) {
+          newValues[action] = match.label;
+        }
+      }
+
+      docActionField.setValueMap(newValues);
+      // Avoid setting an action that is on the record(s) but not in the dropdown list.
+      if (newValues[documentActions[0]]) {
+        docActionField.setValueProgrammatically(documentActions[0]);
+      } else {
+        docActionField.setValueProgrammatically(docActionField.getFirstOptionValue());
+      }
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="272C8D38EF3245BF882E623CE92AB4E7">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
@@ -1267,6 +1323,26 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
       gl.setValueFromRecord({ id: data.response.value, _identifier: data.response.identifier });
     }
   );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="DDCA2212D7AF4EE4AD51B1E968CB95F5">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const PURCHASE_INVOICE_WINDOW_ID = '183';
+  const VOID = 'VO';
+  const REVERSE_CORRECT = 'RC';
+  const docActionField = form.getItem('DocAction');
+  const docAction = docActionField.getValue();
+  const selectedRecords = (view.getSelection && view.getSelection()) || [];
+  const isVoidLikeAction = docAction === VOID || docAction === REVERSE_CORRECT;
+
+  if (view.windowId === PURCHASE_INVOICE_WINDOW_ID && isVoidLikeAction) {
+    form.getItem('VoidDate').show();
+    form.getItem('VoidAccountingDate').show();
+    if (selectedRecords.length < 2) {
+      form.getItem('POReference').show();
+    }
+  }
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="DEC3B66EB67A401B95B394EEC6D09A82">
