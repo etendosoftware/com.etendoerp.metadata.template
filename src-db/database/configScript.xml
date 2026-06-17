@@ -586,6 +586,119 @@ return {};]]></newValue>
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const UNMATCH_BUTTON_VALUE = 'UN';
+  const UNMATCH_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.UnMatchSelectedTransactionsActionHandler';
+  const ALGORITHM_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.MatchStatementOnLoadActionHandler';
+  const GET_PREFERENCE_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.MatchStatementOnLoadGetPreferenceActionHandler';
+  const ADD_PREFERENCE_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.MatchStatementOnLoadPreferenceActionHandler';
+
+  const grid = view.theForm.getItem('match_statement').canvas.viewGrid;
+
+  const showResultMessage = function(data) {
+    if (!data || !data.message) {
+      return;
+    }
+    const severity = data.message.severity;
+    if (severity === 'error') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, data.message.title, data.message.text);
+    } else if (severity === 'success') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_SUCCESS, data.message.title, data.message.text);
+    } else if (severity === 'warning') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_WARNING, data.message.title, data.message.text);
+    }
+  };
+
+  view.cancelButton.hide();
+  view.parentElement.parentElement.closeButton.hide();
+
+  const buttons = view.popupButtons.members;
+  let unmatchButton;
+  for (let i = 0; i < buttons.length; i++) {
+    if (buttons[i]._buttonValue === UNMATCH_BUTTON_VALUE) {
+      unmatchButton = buttons[i];
+      break;
+    }
+  }
+  if (unmatchButton) {
+    view.unmatchButton = unmatchButton;
+    unmatchButton.hide();
+    unmatchButton.action = function() {
+      OB.RemoteCallManager.call(
+        UNMATCH_HANDLER,
+        { bankStatementLineIds: grid.getSelectedRecords() },
+        {},
+        function(response, data) {
+          view.onRefreshFunction(view);
+          showResultMessage(data);
+        }
+      );
+    };
+  }
+
+  const addPreference = function() {
+    OB.RemoteCallManager.call(ADD_PREFERENCE_HANDLER, {}, {}, function() {});
+  };
+
+  const runAlgorithm = function(ok) {
+    const params = { executeMatching: ok };
+    if (view.sourceView && view.sourceView.getContextInfo) {
+      params.context = view.sourceView.getContextInfo();
+    }
+    OB.RemoteCallManager.call(ALGORITHM_HANDLER, {}, params, function(response, data) {
+      if (data && data.responseActions) {
+        OB.Utilities.Action.executeJSON(data.responseActions, null, null, view);
+      }
+      grid.invalidateCache();
+    });
+  };
+
+  OB.RemoteCallManager.call(GET_PREFERENCE_HANDLER, {}, {}, function(response, data) {
+    if (data && !data.preference) {
+      view.messageBar.setMessage(
+        isc.OBMessageBar.TYPE_INFO,
+        null,
+        OB.I18N.getLabel('APRM_GRID_PERSIST_MESSAGE'),
+        [
+          {
+            label: OB.I18N.getLabel('OBUIAPP_NeverShowMessageAgain'),
+            onClick: function() {
+              view.messageBar.hide();
+              addPreference();
+            }
+          }
+        ]
+      );
+    }
+  });
+
+  isc.confirm(OB.I18N.getLabel('APRM_AlgorithmConfirm'), runAlgorithm);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  return undefined;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ON_REFRESH" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[(view) => {
+  const grid = view.theForm.getItem('match_statement').canvas.viewGrid;
+  grid.invalidateCache();
+  view.theForm.redraw();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="8DF818E471394C01A6546A4AB7F5E529">
       <oldValue/>
       <newValue><![CDATA[async (process, context) => {
@@ -1139,6 +1252,161 @@ return {
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="A2C19D0EF6594D14A64BC62E99A89CC3">
+      <oldValue/>
+      <newValue><![CDATA[const UOM_MANAGEMENT = 'UomManagement';
+const RETURNABLE_HANDLER =
+  'org.openbravo.common.actionhandler.ServiceReturnableActionHandler';
+const LABEL_OUT_OF_RANGE = 'OBUIAPP_RM_OutOfRange';
+const LABEL_OUT_OF_RANGE_AUM = 'OBUIAPP_RM_OutOfRange_AUM';
+
+const ZERO = () => BigDecimal.prototype.ZERO;
+const ONE = () => BigDecimal.prototype.ONE;
+const bd = (value) => new BigDecimal(String(value));
+
+// Faithful reproduction of the classic SmartClient `isc.isA.Number(x)` type-check,
+// which the new-UI `isc` shim does not expose. Pure, self-contained, no platform dependency.
+const isNum = (value) => typeof value === 'number' && isFinite(value);
+
+const isUomManagementEnabled = () =>
+  OB.PropertyStore.get(UOM_MANAGEMENT) === 'Y';
+
+const appliesUom = (record) =>
+  isUomManagementEnabled() && record.returnedUOM !== record.uOM;
+
+const showOutOfRange = (view, record, remaining, newReturnedQty) => {
+  if (appliesUom(record)) {
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_ERROR,
+      null,
+      OB.I18N.getLabel(LABEL_OUT_OF_RANGE_AUM, [
+        newReturnedQty.toString(),
+        record.uOM$_identifier,
+        remaining.toString()
+      ])
+    );
+  } else {
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_ERROR,
+      null,
+      OB.I18N.getLabel(LABEL_OUT_OF_RANGE, [remaining.toString()])
+    );
+  }
+};
+
+const returnedUomValidate = (item, validator, value, record) => {
+  const view = item.grid.view;
+  const movementQty = isNum(record.movementQuantity)
+    ? bd(record.movementQuantity)
+    : ZERO();
+  const returnedQty = isNum(record.returnQtyOtherRM)
+    ? bd(record.returnQtyOtherRM)
+    : ZERO();
+  let newReturnedQty = isNum(record.returned) ? bd(record.returned) : ZERO();
+
+  if (appliesUom(record)) {
+    newReturnedQty = newReturnedQty.multiply(
+      isNum(record.aumConversionRate) ? bd(record.aumConversionRate) : ONE()
+    );
+  }
+
+  const remaining = movementQty.subtract(returnedQty);
+  if (newReturnedQty.compareTo(remaining) <= 0 && record.returned > 0) {
+    view.messageBar.hide(true);
+    return true;
+  }
+  showOutOfRange(view, record, remaining, newReturnedQty);
+  return false;
+};
+
+const orderQtyValidate = (item, validator, value, record) => {
+  const view = item.grid.view;
+  if (!isNum(value)) {
+    return false;
+  }
+  if (record.goodsShipmentLine === null || record.goodsShipmentLine === '') {
+    return value !== null && value > 0;
+  }
+  const movementQty =
+    record.movementQuantity !== null ? bd(record.movementQuantity) : ZERO();
+  const returnedQty =
+    record.returnQtyOtherRM !== null ? bd(record.returnQtyOtherRM) : ZERO();
+  let newReturnedQty = bd(value);
+
+  if (appliesUom(record)) {
+    newReturnedQty = newReturnedQty.multiply(bd(record.aumConversionRate));
+  }
+
+  const remaining = movementQty.subtract(returnedQty);
+  if (value !== null && newReturnedQty.compareTo(remaining) <= 0 && value > 0) {
+    view.messageBar.hide(true);
+    return true;
+  }
+  showOutOfRange(view, record, remaining, newReturnedQty);
+  return false;
+};
+
+const orderSelectionChange = (grid, view, record, state) => {
+  if (!state) {
+    return;
+  }
+  let contextInfo = view.parentWindow.activeView.getContextInfo(
+    false,
+    true,
+    true,
+    true
+  );
+  if (!contextInfo.inpdateordered) {
+    contextInfo = view.parentWindow.activeView.parentView.getContextInfo(
+      false,
+      true,
+      true,
+      true
+    );
+  }
+  if (!record.returnReason) {
+    record.returnReason = contextInfo.inpcReturnReasonId;
+  }
+  OB.RemoteCallManager.call(
+    RETURNABLE_HANDLER,
+    {
+      rfcOrderDate: contextInfo.inpdateordered,
+      goodsShipmentId: record.id,
+      productId: record.product
+    },
+    {},
+    (response, data) => {
+      if (!data.message) {
+        return;
+      }
+      if (data.message.severity === isc.OBMessageBar.TYPE_ERROR) {
+        view.messageBar.setMessage(
+          isc.OBMessageBar.TYPE_ERROR,
+          data.message.title,
+          data.message.text
+        );
+        grid.deselectRecord(grid.getRecordIndex(record));
+      } else {
+        view.messageBar.setMessage(
+          isc.OBMessageBar.TYPE_WARNING,
+          data.message.title,
+          data.message.text
+        );
+      }
+    }
+  );
+};
+
+return {
+  returnedUomValidate,
+  orderQtyValidate,
+  orderSelectionChange
+};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="A2C19D0EF6594D14A64BC62E99A89CC3">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="A5A9B914DEAF4C16B028C9D8A4F39A6F">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -1565,6 +1833,96 @@ return {
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="E68790A7B65F4D45AB35E2BAE34C1F39">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const bankStatementLineId = view.callerField.record.id;
+  view.theForm.addField({
+    name: 'bankStatementLineId',
+    reference: '10'
+  });
+  view.theForm.hideItem('bankStatementLineId');
+  view.theForm
+    .getItem('ad_org_id_process')
+    .setValue(view.theForm.getItem('ad_org_id').getValue());
+  return { bankStatementLineId: bankStatementLineId };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="E68790A7B65F4D45AB35E2BAE34C1F39">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const TYPE_DEPOSIT = 'BPD';
+  const TYPE_WITHDRAWAL = 'BPW';
+  const record = view.callerField && view.callerField.record;
+
+  // Classic guard: only the Match Statement launch (record.match) gates the submit.
+  if (!record || !record.match) {
+    return undefined;
+  }
+
+  // The process-form values must be read through `view.theForm.getItem(<columnName>)`.
+  // `view.getContextInfo()` spreads `form.getValues()`, which is keyed by the parameter
+  // DISPLAY name (e.g. "Deposit Amount"), NOT the column name — so `info.depositamt`
+  // would be `undefined`. `getItem(columnName)` resolves columnName -> parameter.name
+  // and coerces Amount references to a Number (see verification note V1).
+  const form = view.theForm;
+  const toNumber = (v) => (typeof v === 'number' ? v : Number(v) || 0);
+  const blineAmt = toNumber(record.amount);
+  const trxAmt =
+    toNumber(form.getItem('depositamt').getValue()) -
+    toNumber(form.getItem('withdrawalamt').getValue());
+  const paymentId = form.getItem('fin_payment_id').getValue();
+  const glitemId = form.getItem('c_glitem_id').getValue();
+  const trxType = form.getItem('trxtype').getValue();
+
+  if (
+    (trxType === TYPE_DEPOSIT || trxType === TYPE_WITHDRAWAL) &&
+    !glitemId &&
+    !paymentId
+  ) {
+    const text = OB.I18N.getLabel('APRM_INVALID_TRANSACTION');
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text: text };
+  }
+
+  if (trxAmt === blineAmt) {
+    return undefined;
+  }
+
+  const hideSplitConfirmation = OB.PropertyStore.get(
+    'APRM_MATCHSTATEMENT_HIDE_PARTIALMATCH_POPUP',
+    view.windowId
+  );
+  if (hideSplitConfirmation === 'Y') {
+    return undefined;
+  }
+
+  const formatAmount = (amount) =>
+    OB.Utilities.Number.JSToOBMasked(
+      amount,
+      OB.Format.defaultNumericMask,
+      OB.Format.defaultDecimalSymbol,
+      OB.Format.defaultGroupingSymbol,
+      OB.Format.defaultGroupingSize
+    );
+
+  const confirmed = await confirm(
+    OB.I18N.getLabel('APRM_SplitBankStatementLineConfirm', [
+      formatAmount(blineAmt),
+      formatAmount(trxAmt)
+    ])
+  );
+
+  if (!confirmed) {
+    return { severity: 'error', text: '' };
+  }
+  return undefined;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="E68790A7B65F4D45AB35E2BAE34C1F39">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="0981CFAA3B244E3C8CDF439626D4B352">
       <oldValue/>
       <newValue><![CDATA[(item, view, form) => {
@@ -1608,6 +1966,40 @@ return {
   };
 
   OB.RemoteCallManager.call(SHOW_DATES_HANDLER, { balanceValue: balanceValue }, {}, hideFields);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="0AC32C93E78E47FBA10B62CB1AE72303">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  grid.setColumnValidator('returned', orderQtyValidate);
+  grid.setColumnValidator('returnedUOM', returnedUomValidate);
+  grid.onSelectionToggle((record, state) => {
+    orderSelectionChange(grid, view, record, state);
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="12DDAD2FBC404963B7A49D2E54985DF9">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const TYPE_DEPOSIT = 'BPD';
+  const TYPE_WITHDRAWAL = 'BPW';
+  const value = item.getValue();
+  const depositamt = form.getItem('depositamt');
+  const withdrawalamt = form.getItem('withdrawalamt');
+
+  if (value === TYPE_WITHDRAWAL) {
+    depositamt.setDisabled(true);
+    withdrawalamt.setDisabled(false);
+    depositamt.setValue(0);
+  } else if (value === TYPE_DEPOSIT) {
+    depositamt.setDisabled(false);
+    withdrawalamt.setDisabled(true);
+    withdrawalamt.setValue(0);
+  } else {
+    depositamt.setDisabled(false);
+    withdrawalamt.setDisabled(false);
+    form.getItem('description').setValue('');
+  }
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="1EE24A173A464164B46519D7FDA3A667">
@@ -1742,6 +2134,127 @@ return {
   grid.onRecordChange((record, changes) => writeTotal());
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="4EDC18E376BB4EEB937AE1F1EF4EB8B1">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const FIND_PROCESS_ID = '154CB4F9274A479CB38A285E16984539';
+  const ADD_PROCESS_ID = 'E68790A7B65F4D45AB35E2BAE34C1F39';
+  const CHECK_CHANGED_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.CheckRecordChangedActionHandler';
+  const UNMATCH_TRANSACTION_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.UnMatchTransactionActionHandler';
+  const SEARCH_LABEL = 'APRM_MATCHTRANSACTION_SEARCH_BUTTON';
+  const ADD_LABEL = 'APRM_MATCHTRANSACTION_ADD_BUTTON';
+  const DELETE_LABEL = 'APRM_MATCHTRANSACTION_DELETE_BUTTON';
+
+  const showError = function(data) {
+    if (data && data.message && data.message.severity === 'error') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, data.message.title, data.message.text);
+      return true;
+    }
+    return false;
+  };
+
+  const recordUpdated = function(record) {
+    const updated = new Date();
+    if (record.bslUpdated) {
+      updated.setTime(new Date(record.bslUpdated).getTime());
+    }
+    return updated;
+  };
+
+  const refreshUnmatchVisibility = function() {
+    const selection = grid.getSelectedRecords() || [];
+    let hasCleared = false;
+    for (let i = 0; i < selection.length; i++) {
+      if (selection[i] && selection[i].cleared) {
+        hasCleared = true;
+        break;
+      }
+    }
+    if (!view.unmatchButton) {
+      return;
+    }
+    if (hasCleared) {
+      view.unmatchButton.show();
+    } else {
+      view.unmatchButton.hide();
+    }
+  };
+
+  const openMatchProcess = function(record, processId, label) {
+    OB.RemoteCallManager.call(
+      CHECK_CHANGED_HANDLER,
+      { bankStatementLineId: record.id, updated: recordUpdated(record) },
+      {},
+      function(response, data) {
+        view.onRefreshFunction(view);
+        if (showError(data)) {
+          return;
+        }
+        view.openProcess({
+          paramWindow: true,
+          processId: processId,
+          windowId: view.windowId,
+          externalParams: {
+            bankStatementLineId: record.id,
+            transactionDate: record.transactionDate
+          },
+          windowTitle: OB.I18N.getLabel(label)
+        });
+      }
+    );
+  };
+
+  const clearTransaction = function(record) {
+    OB.RemoteCallManager.call(
+      UNMATCH_TRANSACTION_HANDLER,
+      { bankStatementLineId: record.id, updated: recordUpdated(record) },
+      {},
+      function(response, data) {
+        view.onRefreshFunction(view);
+        showError(data);
+      }
+    );
+  };
+
+  grid.setRowActions(function(ctx) {
+    const record = ctx.record;
+    return {
+      buttons: [
+        {
+          icon: 'search',
+          prompt: OB.I18N.getLabel(SEARCH_LABEL),
+          disabled: !!record.cleared,
+          action: function() {
+            openMatchProcess(record, FIND_PROCESS_ID, SEARCH_LABEL);
+          }
+        },
+        {
+          icon: 'add',
+          prompt: OB.I18N.getLabel(ADD_LABEL),
+          disabled: !!record.cleared,
+          action: function() {
+            openMatchProcess(record, ADD_PROCESS_ID, ADD_LABEL);
+          }
+        },
+        {
+          icon: 'clearRight',
+          prompt: OB.I18N.getLabel(DELETE_LABEL),
+          disabled: !record.cleared,
+          action: function() {
+            clearTransaction(record);
+          }
+        }
+      ]
+    };
+  });
+
+  grid.onSelectionToggle(function(record, state) {
+    refreshUnmatchVisibility();
+  });
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="4F7E3F7DEF3E41BA81566E6063AB5920">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -1828,6 +2341,43 @@ return {
   OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="6B15654D49A4408DBC25E63836D02199">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const NO_VARIANTS = 'NoVariants';
+  const recordCount = grid.getData().getLength();
+  if (recordCount === 0) {
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_INFO, null, OB.I18N.getLabel(NO_VARIANTS));
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="6F1DACE3F9744318948C5A0154FAFEF2">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.AddTransactionOnChangePaymentActionHandler';
+
+  const callback = (response, data) => {
+    if (!data) {
+      return;
+    }
+    form.getItem('description').setValue(data.description);
+    form.getItem('depositamt').setValue(data.depositamt);
+    form.getItem('withdrawalamt').setValue(data.paymentamt);
+    form.getItem('c_bpartner_id').setValue(data.cBpartnerId);
+  };
+
+  OB.RemoteCallManager.call(
+    HANDLER,
+    {
+      strPaymentId: item.getValue(),
+      strDescription: form.getItem('description').getValue()
+    },
+    {},
+    callback
+  );
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="710B9D8194F84FC78966E7D2B805F9D2">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -1872,6 +2422,14 @@ return {
       {},
       setAcctSchema
     );
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="7B2AE9099ECB4CE9B80C665D7662FA03">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  if (form.getItem('trxtype').getValue() === 'BF') {
+    form.getItem('withdrawalamt').setValue(0);
   }
 }]]></newValue>
     </columnDataChange>
@@ -1983,6 +2541,34 @@ return {
   }
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="9F106995848F42F385EBCB01526E439B">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  form.getItem('dateacct').setValue(item.getValue());
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="AC203DDD5CF1459AA36DC7769ED15567">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  if (form.getItem('trxtype').getValue() === 'BF') {
+    form.getItem('depositamt').setValue(0);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="C511B1965C2A46C2BD8144DB918CD17B">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  form.getItem('ad_org_id_process').setValue(form.getItem('ad_org_id').getValue());
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="D18581DE288A4E3891A8F047355D1CE5">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  grid.onSelectionToggle((record, state) => {
+    orderSelectionChange(grid, view, record, state);
+  });
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="D6991F7834DD4073AC4E5F72A8A5065D">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -2037,6 +2623,30 @@ return {
   } else {
     view.messageBar.hide();
   }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="E3019D02BA14437A9BE0948000062776">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.GLItemTransactionActionHandler';
+
+  const callback = (response, data) => {
+    if (!data) {
+      return;
+    }
+    form.getItem('description').setValue(data.description);
+  };
+
+  OB.RemoteCallManager.call(
+    HANDLER,
+    {
+      strGLItemId: item.getValue(),
+      strDescription: form.getItem('description').getValue()
+    },
+    {},
+    callback
+  );
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="E41862369EA645AF9952BCE0FD5AEFE0">
