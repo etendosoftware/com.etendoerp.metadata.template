@@ -533,6 +533,55 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="60F1E2DEB1B544908CDD4CF99ACA80EB">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+const EAPM_POPUP_ACTION = "EAPM_Popup";
+const SECOND_HANDLER = "com.etendoerp.advpaymentmngt.actionHandler.PaymentExecutionProcessActionHandler";
+const PAYMENT_PICK_GRID = "payment_pick";
+const SEVERITY_SUCCESS = "success";
+const SEVERITY_ERROR = "error";
+const GENERIC_ERROR = "Error executing the process";
+
+const refreshPaymentGrid = () => {
+  OB.Utilities.Action.executeJSON([{ refreshGrid: {} }, { refreshGridParameter: { gridName: PAYMENT_PICK_GRID } }]);
+};
+
+const handleExecutionResponse = (data) => {
+  if (!data) {
+    messageBar.setMessage(SEVERITY_ERROR, null, GENERIC_ERROR);
+    return;
+  }
+  if (data.success) {
+    refreshPaymentGrid();
+    messageBar.setMessage(SEVERITY_SUCCESS, null, data.message);
+  } else {
+    messageBar.setMessage(SEVERITY_ERROR, null, data.error || GENERIC_ERROR);
+  }
+};
+
+OB.Utilities.Action.set(EAPM_POPUP_ACTION, async (actionData) => {
+  const collected = await openDynamicForm({
+    title: actionData.executionProcessName,
+    fields: actionData.processParameters,
+  });
+  if (!collected) {
+    return;
+  }
+  OB.RemoteCallManager.call(
+    SECOND_HANDLER,
+    { _params: actionData, processParameters: collected },
+    {},
+    (rpcResponse, data) => handleExecutionResponse(data)
+  );
+});
+
+return {};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="60F1E2DEB1B544908CDD4CF99ACA80EB">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="71E00A0E964E43AE81C5AFBCDCA5F87C">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
@@ -601,6 +650,97 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
 
   return data;
 }]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="99E532BA0306450A839F5DE238375238">
+      <oldValue><![CDATA[async (_processDefinition, { selectedRecords, parentRecord }) => {
+  let initialTotalPay = 0;
+
+
+  // Add if there are already records selected by default
+  if (selectedRecords && selectedRecords.length > 0) {
+    for (let i = 0; i < selectedRecords.length; i++) {
+        const payment = selectedRecords[i].realpayment || selectedRecords[i].realPayment || 0;
+        initialTotalPay += parseFloat(payment);
+    }
+  }
+
+  // Extract the dueDate from the parent record
+  const remittanceDueDate = parentRecord?.inpduedate || parentRecord?.dueDate;
+
+  // Initial Payload
+  const loadPayload = {
+    "total count": initialTotalPay
+  };
+
+  // Map the injected Criteria in onLoadGrid (expectedDate <= remittanceDueDate)
+  if (remittanceDueDate) {
+    // The grid in the parameter definition is called "pending payments" (dBColumnName)
+    const gridKey = "pending payments";
+    console.log("gridKey: ", gridKey);
+    
+    loadPayload._filterExpressions = {
+      [gridKey]: {
+        expectedDate: {
+          operator: "lessOrEqual",
+          value: `To - ${remittanceDueDate}`
+        }
+      }
+    };
+  }
+
+  return loadPayload;
+}
+]]></oldValue>
+      <newValue><![CDATA[async (process, view) => {
+  const GRID_KEY = 'pending payments';
+  const remittanceDueDate = view.getContextInfo().inpduedate;
+  if (!remittanceDueDate) {
+    return;
+  }
+  return {
+    _filterExpressions: {
+      [GRID_KEY]: {
+        expectedDate: { operator: 'lessOrEqual', value: remittanceDueDate }
+      }
+    }
+  };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="99E532BA0306450A839F5DE238375238">
+      <oldValue><![CDATA[{
+  id: "OB_REM_ProcessPP_Rules",
+  compute: (context, util) => {
+    const gridKey = "pending payments";
+    
+    const selectedRecords = (context._gridSelection && context._gridSelection[gridKey]) 
+      ? context._gridSelection[gridKey]._selection 
+      : context._selectedRecords || [];
+      
+    let totalPay = 0;
+    
+    if (selectedRecords) {
+      for (let i = 0; i < selectedRecords.length; i++) {
+        const rawPayment = selectedRecords[i].realpayment || selectedRecords[i].realPayment || 0;
+        const paymentAmount = parseFloat(rawPayment);
+        totalPay += isNaN(paymentAmount) ? 0 : paymentAmount;
+      }
+    }
+    
+    const finalValueString = totalPay.toFixed(2);
+
+    return {
+      "total count": finalValueString,
+      "totalCount": finalValueString,
+      "inptotal count": finalValueString
+    };
+  }
+}
+]]></oldValue>
+      <newValue/>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="99E532BA0306450A839F5DE238375238">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="ISCANADDRECORDSTOSELECTOR" pkRow="9BED7889E1034FE68BD85D5D16857320">
       <oldValue><![CDATA[Y]]></oldValue>
@@ -863,6 +1003,204 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   },
 };]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="9C260D0E9C054A6F88AFC8E3B23A0E9A">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const AMOUNT_NOT_EQUALS = 'OBFBPS_Err_AmountNotEquals';
+  const SELECT_INVOICE = 'OBFBPS_Err_SelectInvoice';
+  const purchaseInvoiceGrid = getInvoiceGrid(view, PURCHASE_INVOICE);
+  const salesInvoiceGrid = getInvoiceGrid(view, SALES_INVOICE);
+  const amountPurchase = getSelectedAmount(purchaseInvoiceGrid);
+  const amountSales = getSelectedAmount(salesInvoiceGrid);
+  view.theForm.getItem(PURCHASE_AMOUNT).setValue(amountPurchase);
+  view.theForm.getItem(SALES_AMOUNT).setValue(amountSales);
+  const exceedInvoice = checkAmounts(view, purchaseInvoiceGrid, salesInvoiceGrid);
+  if (exceedInvoice) {
+    return { severity: 'error', text: OB.I18N.getLabel(AMOUNT_EXCEED_PENDING, [exceedInvoice]) };
+  }
+  if (amountPurchase !== amountSales) {
+    const text = OB.I18N.getLabel(AMOUNT_NOT_EQUALS);
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text };
+  }
+  if (amountPurchase === 0) {
+    const text = OB.I18N.getLabel(SELECT_INVOICE);
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text };
+  }
+  return undefined;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="9C260D0E9C054A6F88AFC8E3B23A0E9A">
+      <oldValue/>
+      <newValue><![CDATA[const PURCHASE_INVOICE = 'OBFBPS_PurchaseInvoice';
+const SALES_INVOICE = 'OBFBPS_SalesInvoice';
+const PURCHASE_AMOUNT = 'OBFBPS_PurchaseAmount';
+const SALES_AMOUNT = 'OBFBPS_SalesAmount';
+const PEND_AMOUNT = 'OBFBPS_PendAmount';
+const AMOUNT_EXCEED_PENDING = 'OBFBPS_Err_AmountExceedPending';
+const SETTLEMENT_AMOUNT = 'settlementAmount';
+
+const getInvoiceGrid = (view, paramName) => view.theForm.getItem(paramName).canvas.viewGrid;
+
+const getSelectedAmount = grid => {
+  let amount = BigDecimal.prototype.ZERO;
+  const records = grid.getSelectedRecords();
+  records.forEach(record => {
+    const index = grid.getRecordIndex(record);
+    const item = grid.getEditValues(index);
+    const editedAmount = item && item[SETTLEMENT_AMOUNT];
+    const value = editedAmount ? editedAmount : record[SETTLEMENT_AMOUNT] || 0;
+    amount = amount.add(new BigDecimal(String(value)));
+  });
+  return Number(amount.toString());
+};
+
+const checkInvoiceAmount = grid => {
+  let result = null;
+  const records = grid.getSelectedRecords();
+  records.every(record => {
+    const index = grid.getRecordIndex(record);
+    const item = grid.getEditValues(index);
+    const editedAmount = item && item[SETTLEMENT_AMOUNT];
+    if (editedAmount && editedAmount > record.amount) {
+      result = record.documentNo;
+      return false;
+    }
+    return true;
+  });
+  return result;
+};
+
+const checkAmounts = (view, purchaseInvoiceGrid, salesInvoiceGrid) => {
+  view.messageBar.hide();
+  const grids = [purchaseInvoiceGrid, salesInvoiceGrid];
+  for (let i = 0; i < grids.length; i++) {
+    const invoice = checkInvoiceAmount(grids[i]);
+    if (invoice) {
+      const text = OB.I18N.getLabel(AMOUNT_EXCEED_PENDING, [invoice]);
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+      return invoice;
+    }
+  }
+  return null;
+};
+
+const setAmounts = view => {
+  const purchaseInvoiceGrid = getInvoiceGrid(view, PURCHASE_INVOICE);
+  const salesInvoiceGrid = getInvoiceGrid(view, SALES_INVOICE);
+  const amountPurchase = getSelectedAmount(purchaseInvoiceGrid);
+  const amountSales = getSelectedAmount(salesInvoiceGrid);
+  view.theForm.getItem(PURCHASE_AMOUNT).setValue(amountPurchase);
+  view.theForm.getItem(SALES_AMOUNT).setValue(amountSales);
+  view.theForm.getItem(PEND_AMOUNT).setValue(amountSales - amountPurchase);
+};
+
+// Live selection-toggle recompute. The module body runs once per modal open, so
+// recomputeAmounts is a single stable reference; passing that same reference to
+// every grid's grid.onSelectionToggle lets the substrate's reference-dedup
+// collapse repeated registrations across grid reloads. It reads the latest view
+// captured on grid load, so it always recomputes against a current view proxy.
+let lastView = null;
+const setLastView = view => { lastView = view; };
+const recomputeAmounts = () => { if (lastView) setAmounts(lastView); };
+
+// Live recompute when the user edits a row's Settlement Amount cell. Ported
+// 1:1 from classic amountChange(item, view, form, grid): recompute every total
+// (setAmounts) and revalidate the over-pending banner (checkAmounts), ignoring
+// the return value exactly as classic did. Registered via grid.setColumnOnChange
+// under SETTLEMENT_AMOUNT, so it is one stable module-scope reference reused by
+// both grids' on_grid_load (re-registration is idempotent by column key).
+const onSettlementAmountChange = (item, view, form, grid) => {
+  setAmounts(view);
+  const purchaseInvoiceGrid = getInvoiceGrid(view, PURCHASE_INVOICE);
+  const salesInvoiceGrid = getInvoiceGrid(view, SALES_INVOICE);
+  checkAmounts(view, purchaseInvoiceGrid, salesInvoiceGrid);
+};
+
+return {
+  PURCHASE_INVOICE,
+  SALES_INVOICE,
+  PURCHASE_AMOUNT,
+  SALES_AMOUNT,
+  AMOUNT_EXCEED_PENDING,
+  SETTLEMENT_AMOUNT,
+  getInvoiceGrid,
+  getSelectedAmount,
+  checkInvoiceAmount,
+  checkAmounts,
+  setAmounts,
+  setLastView,
+  recomputeAmounts,
+  onSettlementAmountChange
+};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="9C260D0E9C054A6F88AFC8E3B23A0E9A">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="A5A9B914DEAF4C16B028C9D8A4F39A6F">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const TABLE_ID = "318";
+  const HANDLER = "com.smf.jobs.defaults.ProcessInvoicesDefaults";
+  const form = view.theForm;
+  const docActionField = form.getItem("DocAction");
+  const selectedRecords = view.selectedRecords || [];
+  const isProcessing = "";
+
+  const documentStatuses = [];
+  const documentActions = [];
+  for (const record of selectedRecords) {
+    if (!documentStatuses.includes(record.documentStatus)) {
+      documentStatuses.push(record.documentStatus);
+    }
+    if (!documentActions.includes(record.documentAction)) {
+      documentActions.push(record.documentAction);
+    }
+  }
+
+  form.getItem("VoidDate").hide();
+  form.getItem("VoidAccountingDate").hide();
+  form.getItem("POReference").hide();
+
+  OB.RemoteCallManager.call(
+    HANDLER,
+    {
+      documentStatuses: documentStatuses,
+      isProcessing: isProcessing,
+      tableId: TABLE_ID,
+    },
+    {},
+    (response, data, request) => {
+      const actions = data.actions || [];
+      const currentValues = docActionField.getValueMap();
+      const newValues = [];
+
+      for (const action of actions) {
+        const match = currentValues.find((o) => o.value === action || o.id === action);
+        if (match) {
+          newValues.push(match);
+        }
+      }
+
+      docActionField.setValueMap(newValues);
+
+      const firstAction = documentActions[0];
+      const hasFirstAction = newValues.some((o) => o.value === firstAction || o.id === firstAction);
+      if (hasFirstAction) {
+        docActionField.setValueProgrammatically(firstAction);
+      } else {
+        docActionField.setValueProgrammatically(docActionField.getFirstOptionValue());
+      }
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="A5A9B914DEAF4C16B028C9D8A4F39A6F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="AB2EFCAABB7B4EC0A9B30CFB82963FB6">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -941,6 +1279,171 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="C4265E27C8134096B49DFBF69369DFC6">
+      <oldValue/>
+      <newValue><![CDATA[const RFC_WINDOW_ID = 'FF808081330213E60133021822E40007';
+const SERVICE_PRICE_HANDLER = 'org.openbravo.common.actionhandler.ServiceRelatedLinePriceActionHandler';
+
+const ZERO = () => BigDecimal.prototype.ZERO;
+const bd = (value) => new BigDecimal(String(value));
+
+const grid = (view) => view.theForm.getItem('grid').canvas.viewGrid;
+
+const updateTotalLinesAmount = (view) => {
+  const form = view.theForm;
+  const g = grid(view);
+  const amountField = g.getFieldByColumnName('amount');
+  const discountField = g.getFieldByColumnName('discountsAmt');
+  const priceField = g.getFieldByColumnName('price');
+  const relatedQtyField = g.getFieldByColumnName('relatedQuantity');
+  const unitDiscountAmtField = g.getFieldByColumnName('unitDiscountsAmt');
+  const selectedRecords = g.getSelectedRecords();
+
+  let totalLinesAmt = ZERO();
+  let totalLinesDiscountAmt = ZERO();
+  let totalLinesPriceAmt = ZERO();
+  let totalLinesRelatedQty = ZERO();
+  let totalLinesUnitDiscountAmt = ZERO();
+
+  selectedRecords.forEach((record) => {
+    const index = g.getRecordIndex(record);
+    totalLinesAmt = totalLinesAmt.add(bd(g.getEditedCell(index, amountField)));
+    totalLinesDiscountAmt = totalLinesDiscountAmt.add(bd(g.getEditedCell(index, discountField)));
+    totalLinesPriceAmt = totalLinesPriceAmt.add(bd(g.getEditedCell(index, priceField)));
+    totalLinesRelatedQty = totalLinesRelatedQty.add(bd(g.getEditedCell(index, relatedQtyField)));
+    totalLinesUnitDiscountAmt = totalLinesUnitDiscountAmt.add(bd(g.getEditedCell(index, unitDiscountAmtField)));
+  });
+
+  form.getItem('totallinesamount').setValue(Number(totalLinesAmt.toString()));
+  form.getItem('totaldiscountsamount').setValue(Number(totalLinesDiscountAmt.toString()));
+  form.getItem('totapriceamount').setValue(Number(totalLinesPriceAmt.toString()));
+  form.getItem('totalrelatedqty').setValue(Number(totalLinesRelatedQty.toString()));
+  form.getItem('totalUnitDiscountsAmt').setValue(Number(totalLinesUnitDiscountAmt.toString()));
+};
+
+const buildRelatedLinesInfo = (g) => {
+  const info = {
+    lineAmount: [],
+    lineDiscounts: [],
+    linePriceamount: [],
+    lineRelatedqty: [],
+    lineUnitdiscountsamt: [],
+    relatedLines: []
+  };
+  g.getSelectedRecords().forEach((selectedRecord) => {
+    info.lineAmount.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('amount')));
+    info.lineDiscounts.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('discountsAmt')));
+    info.linePriceamount.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('price')));
+    info.lineRelatedqty.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('relatedQuantity')));
+    info.lineUnitdiscountsamt.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('unitDiscountsAmt')));
+    info.relatedLines.push(selectedRecord.id);
+  });
+  return info;
+};
+
+const updateServicePrice = (view, record, state) => {
+  const form = view.theForm;
+  const g = grid(view);
+  const totalServiceAmount = form.getItem('totalserviceamount');
+  const recordId = record ? record.id : null;
+
+  let contextInfo = view.parentWindow.activeView.getContextInfo();
+  if (!contextInfo.inpTabId) {
+    contextInfo = view.parentWindow.activeView.parentView.getContextInfo();
+  }
+
+  const parameters = {
+    orderlineId: form.getItem('orderlineId').getValue(),
+    amount: form.getItem('totallinesamount').getValue(),
+    discounts: form.getItem('totaldiscountsamount').getValue(),
+    priceamount: form.getItem('totapriceamount').getValue(),
+    relatedqty: form.getItem('totalrelatedqty').getValue(),
+    unitdiscountsamt: form.getItem('totalUnitDiscountsAmt').getValue(),
+    orderLineToRelateId: recordId,
+    tabId: contextInfo.inpTabId,
+    state: state,
+    relatedLinesInfo: buildRelatedLinesInfo(g)
+  };
+
+  OB.RemoteCallManager.call(SERVICE_PRICE_HANDLER, parameters, {}, (response, data) => {
+    if (data.amount || data.amount === 0) {
+      totalServiceAmount.setValue(Number(data.amount));
+      if (data.message) {
+        view.messageBar.setMessage(isc.OBMessageBar.TYPE_WARNING, data.message.title, data.message.text);
+      }
+    } else {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, data.message.title, data.message.text);
+      if (record) {
+        g.deselectRecord(g.getRecordIndex(record));
+      }
+    }
+  });
+};
+
+const relatedQuantityOnSelect = (view, record, state) => {
+  const g = grid(view);
+  const index = g.getRecordIndex(record);
+  if (view.windowId !== RFC_WINDOW_ID && state) {
+    g.setEditValue(index, 'relatedQuantity', Number(bd(record.originalOrderedQuantity).toString()));
+  } else {
+    g.setEditValue(index, 'relatedQuantity', 0);
+  }
+  updateTotalLinesAmount(view);
+  updateServicePrice(view, record, state);
+};
+
+const quantityCellOnChange = (item, view, form, g) => {
+  const index = g.getRecordIndex(item.record);
+  const newQty = bd(item.getValue());
+  const precision = form.getItem('pricePrecision').getValue();
+  const newAmount = newQty.multiply(bd(item.record.price)).setScale(precision, BigDecimal.prototype.ROUND_HALF_UP);
+  const newDiscount = newQty.multiply(bd(item.record.unitDiscountsAmt)).setScale(precision, BigDecimal.prototype.ROUND_HALF_UP);
+  g.setEditValue(index, 'amount', Number(newAmount.toString()));
+  g.setEditValue(index, 'discountsAmount', Number(newDiscount.toString()));
+  updateTotalLinesAmount(view);
+  updateServicePrice(view, item.record, null);
+};
+
+const isNumber = (value) => typeof value === 'number' && !isNaN(value);
+
+const quantityValidate = (item, validator, value, record) => {
+  if (!isNumber(value)) {
+    return false;
+  }
+  const quantity = bd(value);
+  const returnedQty = bd(record.returnQtyOtherRM);
+  const recordQty = bd(record.originalOrderedQuantity);
+  const windowId = item.grid.view.windowId;
+  const messageBar = item.grid.view.messageBar;
+  const isRfc = windowId === RFC_WINDOW_ID;
+
+  if (isRfc && (value < 0 || quantity.compareTo(recordQty.subtract(returnedQty)) > 0)) {
+    messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('OBUIAPP_RM_OutOfRange', [recordQty.subtract(returnedQty).toString()]));
+    return false;
+  }
+  if (!isRfc && recordQty.compareTo(ZERO()) < 0 && (quantity.compareTo(recordQty) < 0 || value > 0)) {
+    messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('ServiceQuantityLessThanOrdered', [recordQty.toString()]));
+    return false;
+  }
+  if (!isRfc && recordQty.compareTo(ZERO()) > 0 && (quantity.compareTo(recordQty) > 0 || value < 0)) {
+    messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('ServiceQuantityMoreThanOrdered', [recordQty.toString()]));
+    return false;
+  }
+  return true;
+};
+
+return {
+  updateTotalLinesAmount,
+  updateServicePrice,
+  relatedQuantityOnSelect,
+  quantityCellOnChange,
+  quantityValidate
+};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C4265E27C8134096B49DFBF69369DFC6">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C88AB6CBA1694000AFF5706A31B08AE1">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
@@ -957,6 +1460,108 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="DF7F70B82C514F639F06495E0B818A53">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  setAmounts(view);
+  view.messageBar.hide();
+  const validation = validateAmounts(view);
+  if (validation) {
+    return validation;
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="DF7F70B82C514F639F06495E0B818A53">
+      <oldValue/>
+      <newValue><![CDATA[const CREDIT_IN_GRID = 'OBFBPS_CreditIn';
+const CREDIT_OUT_GRID = 'OBFBPS_CreditOut';
+const CREDIT_IN_AMOUNT = 'OBFBPS_CreditInAmount';
+const CREDIT_OUT_AMOUNT = 'OBFBPS_CreditOutAmount';
+const CREDIT_PEND_AMOUNT = 'OBFBPS_CreditPendAmount';
+
+const ERR_EXCEED_PENDING = 'OBFBPS_Err_CreditExceedPending';
+const ERR_NOT_EQUALS = 'OBFBPS_Err_CreditNotEquals';
+const ERR_SELECT_CREDIT = 'OBFBPS_Err_SelectCredit';
+
+const getGrid = (view, paramName) => view.theForm.getItem(paramName).canvas.viewGrid;
+
+const getSelectedAmount = grid => {
+  let amount = BigDecimal.prototype.ZERO;
+  grid.getSelectedRecords().forEach(record => {
+    const index = grid.getRecordIndex(record);
+    const editValues = grid.getEditValues(index);
+    const settlementAmount = editValues.settlementAmount
+      ? editValues.settlementAmount
+      : grid.getRecord(index).settlementAmount || 0;
+    amount = amount.add(new BigDecimal(String(settlementAmount)));
+  });
+  return Number(amount);
+};
+
+const setAmounts = view => {
+  const creditInGrid = getGrid(view, CREDIT_IN_GRID);
+  const creditOutGrid = getGrid(view, CREDIT_OUT_GRID);
+  const amountCreditIn = getSelectedAmount(creditInGrid);
+  const amountCreditOut = getSelectedAmount(creditOutGrid);
+  view.theForm.getItem(CREDIT_IN_AMOUNT).setValue(amountCreditIn);
+  view.theForm.getItem(CREDIT_OUT_AMOUNT).setValue(amountCreditOut);
+  view.theForm.getItem(CREDIT_PEND_AMOUNT).setValue(amountCreditOut - amountCreditIn);
+};
+
+const getExceedingDocumentNo = grid => {
+  let documentNo = null;
+  grid.getSelectedRecords().every(record => {
+    const index = grid.getRecordIndex(record);
+    const editValues = grid.getEditValues(index);
+    if (editValues.settlementAmount && editValues.settlementAmount > grid.getRecord(index).outstandingAmount) {
+      documentNo = grid.getRecord(index).documentNo;
+      return false;
+    }
+    return true;
+  });
+  return documentNo;
+};
+
+const validateAmounts = view => {
+  const creditInGrid = getGrid(view, CREDIT_IN_GRID);
+  const creditOutGrid = getGrid(view, CREDIT_OUT_GRID);
+  const amountCreditIn = getSelectedAmount(creditInGrid);
+  const amountCreditOut = getSelectedAmount(creditOutGrid);
+
+  const exceedIn = getExceedingDocumentNo(creditInGrid);
+  if (exceedIn) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_EXCEED_PENDING, [exceedIn]) };
+  }
+  const exceedOut = getExceedingDocumentNo(creditOutGrid);
+  if (exceedOut) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_EXCEED_PENDING, [exceedOut]) };
+  }
+  if (amountCreditIn !== amountCreditOut) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_NOT_EQUALS) };
+  }
+  if (amountCreditIn === 0) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_SELECT_CREDIT) };
+  }
+  return null;
+};
+
+return {
+  CREDIT_IN_GRID,
+  CREDIT_OUT_GRID,
+  CREDIT_IN_AMOUNT,
+  CREDIT_OUT_AMOUNT,
+  CREDIT_PEND_AMOUNT,
+  getGrid,
+  getSelectedAmount,
+  setAmounts,
+  getExceedingDocumentNo,
+  validateAmounts,
+};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="DF7F70B82C514F639F06495E0B818A53">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
@@ -1099,6 +1704,44 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="49BD36D0E5BE450989B2D2C08ABD1648">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  grid.onSelectionToggle((record, state) => {
+    grid.fireOnPause('selectionChanged' + record.id, () => {
+      relatedQuantityOnSelect(view, record, state);
+    }, 200);
+  });
+  grid.setColumnOnChange('relatedQuantity', quantityCellOnChange);
+  grid.setColumnValidator('relatedQuantity', quantityValidate);
+  updateTotalLinesAmount(view);
+  updateServicePrice(view, null, null);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="4A592FF004A8425999E67FDB5E7A8C66">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const TOTAL_ITEM = 'total count';
+  const SCALE = 2;
+  const sumSelected = () => {
+    let total = BigDecimal.prototype.ZERO;
+    const selected = grid.getSelectedRecords();
+    for (let i = 0; i < selected.length; i++) {
+      const amount = selected[i].realpayment;
+      if (amount !== undefined && amount !== null && amount !== '') {
+        total = total.add(new BigDecimal(String(amount)));
+      }
+    }
+    return total.setScale(SCALE);
+  };
+  const writeTotal = () => {
+    grid.view.theForm.getItem(TOTAL_ITEM).setValue(Number(sumSelected().toString()));
+  };
+  writeTotal();
+  grid.selectionChanged = () => writeTotal();
+  grid.onRecordChange((record, changes) => writeTotal());
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="4F7E3F7DEF3E41BA81566E6063AB5920">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -1141,6 +1784,12 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   }
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="5586C0EA5C40406687AC7BF0C0E85E5B">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setAmounts(view);
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="5DEFDAF5A8A2415A8181879698236A38">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -1177,6 +1826,24 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   };
 
   OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="710B9D8194F84FC78966E7D2B805F9D2">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const VOID_ACTIONS = ["VO", "RC"];
+  const INVOICE_WINDOW_ID = "183";
+  const docActionField = form.getItem("DocAction");
+  const selectedRecords = view.parentWindow.view.viewGrid.getSelectedRecords();
+  const isVoidAction = VOID_ACTIONS.includes(docActionField.getValue());
+
+  if (view.windowId === INVOICE_WINDOW_ID && isVoidAction) {
+    form.getItem("VoidDate").show();
+    form.getItem("VoidAccountingDate").show();
+    if (selectedRecords.length < 2) {
+      form.getItem("POReference").show();
+    }
+  }
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="72ED21539E4541DF91D6EC779373451F">
@@ -1251,6 +1918,12 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   newCriteria.criteria = newCriteria.criteria || [];
   orderGrid.invalidateCache();
   form.redraw();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="92379AD1FF8D4456B87D87D066F7B56D">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setAmounts(view);
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="97DA0EA642004F0BA82A5189A5851CF3">
@@ -1366,6 +2039,15 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   }
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="E41862369EA645AF9952BCE0FD5AEFE0">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setLastView(view);
+  setAmounts(view);
+  grid.onSelectionToggle(recomputeAmounts);
+  grid.setColumnOnChange(SETTLEMENT_AMOUNT, onSettlementAmountChange);
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="E5808EFB574A4416BEB04EBBB0F2C9E8">
       <oldValue/>
       <newValue><![CDATA[(grid, view, parameters) => {
@@ -1415,6 +2097,24 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   setVisibility(DIMENSION_FIELDS, accountLevel === SUMMARY_LEVEL);
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="ECBF663096194274B4FBBAAC1C146D45">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const RECEIVED_IN = "Received In";
+  const PAID_OUT = "Paid Out";
+
+  const itemName = item.name;
+  const itemValue = item.getValue();
+
+  if (itemName === RECEIVED_IN) {
+    form.getItem(PAID_OUT).setValue(!itemValue);
+  }
+
+  if (itemName === PAID_OUT) {
+    form.getItem(RECEIVED_IN).setValue(!itemValue);
+  }
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="F4029E7726074FF2B6D3B59AE3072711">
       <oldValue/>
       <newValue><![CDATA[(item, view, form, grid) => {
@@ -1434,6 +2134,15 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
   };
 
   OB.RemoteCallManager.call(HANDLER, { accountID: item.getValue() }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="F70E0FF6BDA949E08BF1BA10DDD3407C">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setLastView(view);
+  setAmounts(view);
+  grid.onSelectionToggle(recomputeAmounts);
+  grid.setColumnOnChange(SETTLEMENT_AMOUNT, onSettlementAmountChange);
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FA3B7681559342D392EDCB96C9A38552">
@@ -1513,6 +2222,24 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
     );
   } else {
     view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FDB7781154A242D38AEB59DCF265F3A3">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const RECEIVED_IN = "Received In";
+  const PAID_OUT = "Paid Out";
+
+  const itemName = item.name;
+  const itemValue = item.getValue();
+
+  if (itemName === RECEIVED_IN) {
+    form.getItem(PAID_OUT).setValue(!itemValue);
+  }
+
+  if (itemName === PAID_OUT) {
+    form.getItem(RECEIVED_IN).setValue(!itemValue);
   }
 }]]></newValue>
     </columnDataChange>
