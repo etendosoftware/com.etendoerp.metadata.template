@@ -904,7 +904,7 @@ return {};]]></newValue>
   form._overpaymentOriginalValueMap = original;
 
   if (issotrx) {
-    form.focusInItem('actual_payment');
+    form.focusInItem('reference_no');
   }
 }]]></newValue>
     </columnDataChange>
@@ -1019,7 +1019,8 @@ return {};]]></newValue>
   // selection itself; returning undefined lets it proceed (do not call
   // view.executeProcess here, which would double-submit).
   return undefined;
-}]]></newValue>
+}
+]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="9BED7889E1034FE68BD85D5D16857320">
       <oldValue/>
