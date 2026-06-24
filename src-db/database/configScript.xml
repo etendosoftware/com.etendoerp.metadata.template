@@ -309,6 +309,396 @@
       <oldValue/>
       <newValue><![CDATA[#008000]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="154CB4F9274A479CB38A285E16984539">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const HIDE_POPUP_PROPERTY = 'APRM_MATCHSTATEMENT_HIDE_PARTIALMATCH_POPUP';
+  const NO_RECORD_LABEL = 'APRM_SELECT_RECORD_ERROR';
+  const SPLIT_CONFIRM_LABEL = 'APRM_SplitBankStatementLineConfirm';
+
+  const formatAmount = (amount) =>
+    OB.Utilities.Number.JSToOBMasked(
+      amount,
+      OB.Format.defaultNumericMask,
+      OB.Format.defaultDecimalSymbol,
+      OB.Format.defaultGroupingSymbol,
+      OB.Format.defaultGroupingSize
+    );
+
+  const contextInfo = view.getContextInfo();
+  const trxParameter = contextInfo && contextInfo.findtransactiontomatch;
+  const trxSelection = trxParameter && trxParameter._selection;
+
+  if (!trxSelection || !trxSelection[0]) {
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_ERROR,
+      null,
+      OB.I18N.getLabel(NO_RECORD_LABEL)
+    );
+    return { severity: 'error', text: OB.I18N.getLabel(NO_RECORD_LABEL) };
+  }
+
+  const blineAmt = new BigDecimal(String(view.callerField.record.amount));
+  let totalTrxAmt = BigDecimal.prototype.ZERO;
+  for (const trx of trxSelection) {
+    const trxDepositAmt = new BigDecimal(String(trx.depositAmount));
+    const trxPaymentAmt = new BigDecimal(String(trx.paymentAmount));
+    totalTrxAmt = totalTrxAmt.add(trxDepositAmt.subtract(trxPaymentAmt));
+  }
+
+  const splitRequired = totalTrxAmt.compareTo(blineAmt) !== 0;
+  if (!splitRequired) {
+    return (await view.executeProcess())?.message;
+  }
+
+  const hideSplitConfirmation =
+    OB.PropertyStore.get(HIDE_POPUP_PROPERTY, view.windowId) === 'Y';
+  if (hideSplitConfirmation) {
+    return (await view.executeProcess())?.message;
+  }
+
+  const confirmed = await confirm(
+    OB.I18N.getLabel(SPLIT_CONFIRM_LABEL, [
+      formatAmount(blineAmt),
+      formatAmount(totalTrxAmt)
+    ])
+  );
+  if (!confirmed) {
+    return { severity: 'error', text: '' };
+  }
+  return (await view.executeProcess())?.message;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="154CB4F9274A479CB38A285E16984539">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="20D69FFD251A481BA75F33538EDFCF76">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const accountsGrid = () => view.theForm.getItem(ACCOUNTS_PARAM).canvas.viewGrid;
+
+  accountsGrid().hide();
+
+  OB.Utilities.Action.set('showVATGrid', () => {
+    accountsGrid().show();
+  });
+
+  OB.Utilities.Action.set('updateVATTotal', (paramObj) => {
+    view.theForm.getItem(AMOUNT_PARAM).setValue(paramObj.amount);
+  });
+
+  OB.Utilities.Action.set('updateVATLines', (paramObj) => {
+    state.lines = paramObj;
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="20D69FFD251A481BA75F33538EDFCF76">
+      <oldValue/>
+      <newValue><![CDATA[const ACCOUNTS_PARAM = 'Accounts';
+const AMOUNT_PARAM = 'amount';
+const AMOUNT_COLUMN = 'amt';
+
+const state = { lines: null };
+
+const sumAccountAmount = (rowId) => {
+  const lines = state.lines;
+  if (!lines || !Array.isArray(lines.accounts)) {
+    return null;
+  }
+  const matching = lines.accounts.filter((account) => account.id === rowId);
+  if (matching.length === 0) {
+    return null;
+  }
+  return matching.reduce((total, account) => total + parseFloat(account.amt), 0);
+};
+
+return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="20D69FFD251A481BA75F33538EDFCF76">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="272C8D38EF3245BF882E623CE92AB4E7">
+      <oldValue/>
+      <newValue><![CDATA[(_process, view) => {
+  const INVOICE_DEFAULTS_HANDLER = 'com.smf.jobs.defaults.ProcessInvoicesDefaults';
+  const INVOICE_TABLE_ID = '318';
+  const form = view.theForm;
+  const docActionField = form.getItem('DocAction');
+  const voidDateField = form.getItem('VoidDate');
+  const voidAcctDateField = form.getItem('VoidAccountingDate');
+  const supplierReferenceField = form.getItem('POReference');
+  const selectedRecords = view.selectedRecords || [];
+  const documentStatuses = [];
+  const documentActions = [];
+
+  for (let i = 0; i < selectedRecords.length; i++) {
+    const record = selectedRecords[i];
+    if (!documentStatuses.includes(record.documentStatus)) {
+      documentStatuses.push(record.documentStatus);
+    }
+    if (!documentActions.includes(record.documentAction)) {
+      documentActions.push(record.documentAction);
+    }
+  }
+
+  voidDateField.hide();
+  voidAcctDateField.hide();
+  supplierReferenceField.hide();
+
+  OB.RemoteCallManager.call(
+    INVOICE_DEFAULTS_HANDLER,
+    { documentStatuses: documentStatuses, isProcessing: '', tableId: INVOICE_TABLE_ID },
+    {},
+    (response, data, request) => {
+      const actions = data.actions || [];
+      const currentValues = docActionField.getValueMap();
+      const newValues = {};
+
+      for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
+        const match = currentValues.find((option) => option.value === action || option.id === action);
+        if (match) {
+          newValues[action] = match.label;
+        }
+      }
+
+      docActionField.setValueMap(newValues);
+      // Avoid setting an action that is on the record(s) but not in the dropdown list.
+      if (newValues[documentActions[0]]) {
+        docActionField.setValueProgrammatically(documentActions[0]);
+      } else {
+        docActionField.setValueProgrammatically(docActionField.getFirstOptionValue());
+      }
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="272C8D38EF3245BF882E623CE92AB4E7">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="272C8D38EF3245BF882E623CE92AB4E7">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  view.messageBar.setMessage("info", null, OB.I18N.getLabel("CostingRuleHelp"));
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const PRECHECK_HANDLER = "org.openbravo.costing.CostingRuleProcessOnProcessHandler";
+  const EXECUTE_HANDLER = "org.openbravo.costing.CostingRuleProcessActionHandler";
+  view.messageBar.setMessage("info", null, OB.I18N.getLabel("CostingRuleHelp"));
+  const ruleId = view.recordIds && view.recordIds[0];
+  const runExecution = async () => {
+    const response = await callAction(EXECUTE_HANDLER, { M_Costing_Rule_ID: ruleId }, { queryParams: { processId: process.id } });
+    return response.data && response.data.message;
+  };
+  const precheck = await callAction(PRECHECK_HANDLER, { ruleId });
+  const precheckMessage = precheck.data && precheck.data.message;
+  const confirmText = precheckMessage && precheckMessage.text;
+  if (!confirmText) {
+    return await runExecution();
+  }
+  const accepted = await confirm(confirmText);
+  if (!accepted) {
+    return { severity: "info", text: "" };
+  }
+  return await runExecution();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="4CE463C04CA0412CAC57EF58FE0F8498">
+      <oldValue/>
+      <newValue><![CDATA[(() => {})]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="4CE463C04CA0412CAC57EF58FE0F8498">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="4CE463C04CA0412CAC57EF58FE0F8498">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="60F1E2DEB1B544908CDD4CF99ACA80EB">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+const EAPM_POPUP_ACTION = "EAPM_Popup";
+const SECOND_HANDLER = "com.etendoerp.advpaymentmngt.actionHandler.PaymentExecutionProcessActionHandler";
+const PAYMENT_PICK_GRID = "payment_pick";
+const SEVERITY_SUCCESS = "success";
+const SEVERITY_ERROR = "error";
+const GENERIC_ERROR = "Error executing the process";
+
+const refreshPaymentGrid = () => {
+  OB.Utilities.Action.executeJSON([{ refreshGrid: {} }, { refreshGridParameter: { gridName: PAYMENT_PICK_GRID } }]);
+};
+
+const handleExecutionResponse = (data) => {
+  if (!data) {
+    messageBar.setMessage(SEVERITY_ERROR, null, GENERIC_ERROR);
+    return;
+  }
+  if (data.success) {
+    refreshPaymentGrid();
+    messageBar.setMessage(SEVERITY_SUCCESS, null, data.message);
+  } else {
+    messageBar.setMessage(SEVERITY_ERROR, null, data.error || GENERIC_ERROR);
+  }
+};
+
+OB.Utilities.Action.set(EAPM_POPUP_ACTION, async (actionData) => {
+  const collected = await openDynamicForm({
+    title: actionData.executionProcessName,
+    fields: actionData.processParameters,
+  });
+  if (!collected) {
+    return;
+  }
+  OB.RemoteCallManager.call(
+    SECOND_HANDLER,
+    { _params: actionData, processParameters: collected },
+    {},
+    (rpcResponse, data) => handleExecutionResponse(data)
+  );
+});
+
+return {};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="60F1E2DEB1B544908CDD4CF99ACA80EB">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="71E00A0E964E43AE81C5AFBCDCA5F87C">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const UNMATCH_BUTTON_VALUE = 'UN';
+  const UNMATCH_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.UnMatchSelectedTransactionsActionHandler';
+  const ALGORITHM_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.MatchStatementOnLoadActionHandler';
+  const GET_PREFERENCE_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.MatchStatementOnLoadGetPreferenceActionHandler';
+  const ADD_PREFERENCE_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.MatchStatementOnLoadPreferenceActionHandler';
+
+  const grid = view.theForm.getItem('match_statement').canvas.viewGrid;
+
+  const showResultMessage = function(data) {
+    if (!data || !data.message) {
+      return;
+    }
+    const severity = data.message.severity;
+    if (severity === 'error') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, data.message.title, data.message.text);
+    } else if (severity === 'success') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_SUCCESS, data.message.title, data.message.text);
+    } else if (severity === 'warning') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_WARNING, data.message.title, data.message.text);
+    }
+  };
+
+  view.cancelButton.hide();
+  view.parentElement.parentElement.closeButton.hide();
+
+  const buttons = view.popupButtons.members;
+  let unmatchButton;
+  for (let i = 0; i < buttons.length; i++) {
+    if (buttons[i]._buttonValue === UNMATCH_BUTTON_VALUE) {
+      unmatchButton = buttons[i];
+      break;
+    }
+  }
+  if (unmatchButton) {
+    view.unmatchButton = unmatchButton;
+    unmatchButton.hide();
+    unmatchButton.action = function() {
+      OB.RemoteCallManager.call(
+        UNMATCH_HANDLER,
+        { bankStatementLineIds: grid.getSelectedRecords() },
+        {},
+        function(response, data) {
+          view.onRefreshFunction(view);
+          showResultMessage(data);
+        }
+      );
+    };
+  }
+
+  const addPreference = function() {
+    OB.RemoteCallManager.call(ADD_PREFERENCE_HANDLER, {}, {}, function() {});
+  };
+
+  const runAlgorithm = function(ok) {
+    const params = { executeMatching: ok };
+    if (view.sourceView && view.sourceView.getContextInfo) {
+      params.context = view.sourceView.getContextInfo();
+    }
+    OB.RemoteCallManager.call(ALGORITHM_HANDLER, {}, params, function(response, data) {
+      if (data && data.responseActions) {
+        OB.Utilities.Action.executeJSON(data.responseActions, null, null, view);
+      }
+      grid.invalidateCache();
+    });
+  };
+
+  OB.RemoteCallManager.call(GET_PREFERENCE_HANDLER, {}, {}, function(response, data) {
+    if (data && !data.preference) {
+      view.messageBar.setMessage(
+        isc.OBMessageBar.TYPE_INFO,
+        null,
+        OB.I18N.getLabel('APRM_GRID_PERSIST_MESSAGE'),
+        [
+          {
+            label: OB.I18N.getLabel('OBUIAPP_NeverShowMessageAgain'),
+            onClick: function() {
+              view.messageBar.hide();
+              addPreference();
+            }
+          }
+        ]
+      );
+    }
+  });
+
+  isc.confirm(OB.I18N.getLabel('APRM_AlgorithmConfirm'), runAlgorithm);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  return undefined;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ON_REFRESH" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[(view) => {
+  const grid = view.theForm.getItem('match_statement').canvas.viewGrid;
+  grid.invalidateCache();
+  view.theForm.redraw();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="86F0B1EBE2BC48E3ACF458768D14CC99">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="8DF818E471394C01A6546A4AB7F5E529">
       <oldValue/>
       <newValue><![CDATA[async (process, context) => {
@@ -374,306 +764,2936 @@
   return data;
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="99E532BA0306450A839F5DE238375238">
+      <oldValue><![CDATA[async (_processDefinition, { selectedRecords, parentRecord }) => {
+  let initialTotalPay = 0;
+
+
+  // Add if there are already records selected by default
+  if (selectedRecords && selectedRecords.length > 0) {
+    for (let i = 0; i < selectedRecords.length; i++) {
+        const payment = selectedRecords[i].realpayment || selectedRecords[i].realPayment || 0;
+        initialTotalPay += parseFloat(payment);
+    }
+  }
+
+  // Extract the dueDate from the parent record
+  const remittanceDueDate = parentRecord?.inpduedate || parentRecord?.dueDate;
+
+  // Initial Payload
+  const loadPayload = {
+    "total count": initialTotalPay
+  };
+
+  // Map the injected Criteria in onLoadGrid (expectedDate <= remittanceDueDate)
+  if (remittanceDueDate) {
+    // The grid in the parameter definition is called "pending payments" (dBColumnName)
+    const gridKey = "pending payments";
+    console.log("gridKey: ", gridKey);
+    
+    loadPayload._filterExpressions = {
+      [gridKey]: {
+        expectedDate: {
+          operator: "lessOrEqual",
+          value: `To - ${remittanceDueDate}`
+        }
+      }
+    };
+  }
+
+  return loadPayload;
+}
+]]></oldValue>
+      <newValue><![CDATA[async (process, view) => {
+  const GRID_KEY = 'pending payments';
+  const remittanceDueDate = view.getContextInfo().inpduedate;
+  if (!remittanceDueDate) {
+    return;
+  }
+  return {
+    _filterExpressions: {
+      [GRID_KEY]: {
+        expectedDate: { operator: 'lessOrEqual', value: remittanceDueDate }
+      }
+    }
+  };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="99E532BA0306450A839F5DE238375238">
+      <oldValue><![CDATA[{
+  id: "OB_REM_ProcessPP_Rules",
+  compute: (context, util) => {
+    const gridKey = "pending payments";
+    
+    const selectedRecords = (context._gridSelection && context._gridSelection[gridKey]) 
+      ? context._gridSelection[gridKey]._selection 
+      : context._selectedRecords || [];
+      
+    let totalPay = 0;
+    
+    if (selectedRecords) {
+      for (let i = 0; i < selectedRecords.length; i++) {
+        const rawPayment = selectedRecords[i].realpayment || selectedRecords[i].realPayment || 0;
+        const paymentAmount = parseFloat(rawPayment);
+        totalPay += isNaN(paymentAmount) ? 0 : paymentAmount;
+      }
+    }
+    
+    const finalValueString = totalPay.toFixed(2);
+
+    return {
+      "total count": finalValueString,
+      "totalCount": finalValueString,
+      "inptotal count": finalValueString
+    };
+  }
+}
+]]></oldValue>
+      <newValue/>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="99E532BA0306450A839F5DE238375238">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="ISCANADDRECORDSTOSELECTOR" pkRow="9BED7889E1034FE68BD85D5D16857320">
       <oldValue><![CDATA[Y]]></oldValue>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="9BED7889E1034FE68BD85D5D16857320">
       <oldValue/>
-      <newValue><![CDATA[async (process, payload) => {
-  try {
-    const selectedRecords = payload.selectedRecords || [];
-    
-    if (!selectedRecords || selectedRecords.length === 0) {
-      return {};
-    }
+      <newValue><![CDATA[async (process, view) => {
+  const form = view.theForm;
+  const payment = form.getItem('fin_payment_id').getValue();
+  const issotrx = form.getItem('issotrx').getValue();
+  const trxtype = AP.trxtype(form);
 
-    return {
-      autoSelectConfig: {
-        table: 'order_invoice',
-        logic: {
-          field: 'salesOrderNo',
-          operator: '=',
-          valueFromContext: 'documentNo'
-        }
-      }
-    };
-  } catch (error) {
-    console.error('Error en onLoad:', error);
-    return {};
+  form._mcShownPrev = false;
+  form._mcSyncedOnce = false;
+
+  const caller = view.callerField;
+  const parentRecord =
+    caller && caller.view && caller.view.callerField && caller.view.callerField.record
+      ? caller.view.callerField.record
+      : null;
+  if (
+    parentRecord &&
+    typeof parentRecord.affinity !== 'undefined' &&
+    typeof parentRecord.matchingType !== 'undefined'
+  ) {
+    view.theForm.addField({ name: 'bankStatementLineId', value: parentRecord.id });
+    view.theForm.hideItem('bankStatementLineId');
+  }
+
+  AP.paymentMethodMulticurrency(view, form, !payment);
+  AP.reloadLabels(form);
+
+  AP.grid(form, 'glitem').fetchData();
+  AP.grid(form, 'credit_to_use').fetchData();
+
+  form.isCreditAllowed =
+    form.getItem('received_from').getValue() !== undefined &&
+    form.getItem('received_from').getValue() !== null;
+  AP.checkSingleActionAvailable(form);
+
+  const overpaymentAction = form.getItem('overpayment_action');
+  const map = overpaymentAction.getValueMap() || [];
+  const original = {};
+  for (const opt of map) {
+    original[opt.id || opt.value] = opt.label;
+  }
+  form._overpaymentOriginalValueMap = original;
+
+  if (issotrx) {
+    form.focusInItem('reference_no');
   }
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="9BED7889E1034FE68BD85D5D16857320">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const form = view.theForm;
+  const orderInvoiceGrid = AP.grid(form, 'order_invoice');
+  const glitemGrid = AP.grid(form, 'glitem');
+  const receivedFrom = form.getItem('received_from').getValue();
+  const currencyId = form.getItem('c_currency_id').getValue();
+  const issotrx = form.getItem('issotrx').getValue();
+  const finFinancialAccount = form.getItem('fin_financial_account_id').getValue();
+  const amountInvOrds = bd(form.getItem('amount_inv_ords').getValue() || 0);
+  const amountGLItem = bd(form.getItem('amount_gl_items').getValue() || 0);
+  const total = bd(form.getItem('total').getValue() || 0);
+  const actualPayment = bd(form.getItem('actual_payment').getValue() || 0);
+  const overpaymentField = form.getItem('overpayment_action');
+  const overpaymentAction = overpaymentField.getValue();
+  const creditTotalItem = bd(form.getItem('used_credit').getValue() || 0);
+  const document = AP.trxtype(form);
+  const selectedRecords = orderInvoiceGrid.getSelectedRecords();
+  const writeOffLimitPreference = OB.PropertyStore.get('WriteOffLimitPreference', view.windowId);
+
+  let totalWriteOffAmount = ZERO();
+  let totalOustandingAmount = ZERO();
+
+  for (const rec of selectedRecords) {
+    totalOustandingAmount = totalOustandingAmount.add(bd(rec.outstandingAmount));
+  }
+
+  const ordInvRows = (orderInvoiceGrid.data && orderInvoiceGrid.data.localData) ? orderInvoiceGrid.data.localData : [];
+  for (let i = 0; i < ordInvRows.length; i++) {
+    const editValues = orderInvoiceGrid.getEditValues(i);
+    let writeoff = editValues ? editValues.writeoff : undefined;
+    if (writeoff === null || writeoff === undefined) {
+      writeoff = orderInvoiceGrid.getRecord(i).writeoff;
+    }
+    if (writeoff) {
+      const writeOffLineAmount = bd(orderInvoiceGrid.getRecord(i).outstandingAmount || 0)
+        .subtract(bd(orderInvoiceGrid.getEditedRecord(i).amount || 0));
+      totalWriteOffAmount = totalWriteOffAmount.add(writeOffLineAmount);
+    }
+  }
+
+  const fail = (label, title, text) => {
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, title || null, text || OB.I18N.getLabel(label));
+    return { severity: 'error', text: text || OB.I18N.getLabel(label) };
+  };
+
+  if (overpaymentAction && receivedFrom === null) {
+    return fail('APRM_CreditWithoutBPartner');
+  }
+  if (total.compareTo(ZERO()) < 0 && creditTotalItem.signum() !== 0) {
+    return fail('APRM_CreditWithNegativeAmt');
+  }
+  if (
+    actualPayment.compareTo(total.subtract(creditTotalItem)) > 0 &&
+    totalOustandingAmount.compareTo(amountInvOrds.add(totalWriteOffAmount)) > 0
+  ) {
+    return fail('APRM_JSNOTALLAMOUTALLOCATED');
+  }
+  if (total.compareTo(actualPayment.add(creditTotalItem)) > 0) {
+    return fail('APRM_JSMOREAMOUTALLOCATED');
+  }
+  if (
+    creditTotalItem.compareTo(ZERO()) !== 0 &&
+    total.compareTo(creditTotalItem) < 0 &&
+    overpaymentField.isVisible && overpaymentField.isVisible() && overpaymentAction === 'CR'
+  ) {
+    return fail('APRM_MORECREDITAMOUNT');
+  }
+  if (
+    document !== null && document !== '' &&
+    (actualPayment.compareTo(ZERO()) === 0 || totalOustandingAmount.compareTo(ZERO()) === 0) &&
+    amountGLItem.compareTo(ZERO()) === 0 &&
+    view.parentWindow && view.parentWindow.windowId &&
+    !overpaymentAction
+  ) {
+    return fail('APRM_ZEROAMOUNTPAYMENTTRANSACTION');
+  }
+
+  const glRows = (glitemGrid.data && glitemGrid.data.allRows) ? glitemGrid.data.allRows : [];
+  for (let i = 0; i < glRows.length; i++) {
+    const receivedInAmt = bd(glitemGrid.getEditedCell(i, 'received_in') || 0);
+    const paidOutAmt = bd(glitemGrid.getEditedCell(i, 'paid_out') || 0);
+    if (receivedInAmt.signum() === 0 && paidOutAmt.signum() === 0) {
+      return fail('APRM_GLITEMSDIFFERENTZERO');
+    }
+  }
+
+  const response = await callAction('org.openbravo.advpaymentmngt.actionHandler.AddPaymentOnProcessActionHandler', {
+    issotrx,
+    receivedFrom,
+    currencyId,
+    usesCredit: creditTotalItem.compareTo(ZERO()) !== 0,
+    generatesCredit: overpaymentField.isVisible && overpaymentField.isVisible() && overpaymentAction === 'CR',
+    selectedRecords,
+    finFinancialAccount
+  });
+  const data = response && response.data ? response.data : {};
+
+  if (data.message && data.message.severity === 'error') {
+    return fail(null, data.message.title, data.message.text);
+  }
+  if (writeOffLimitPreference === 'Y' && num(totalWriteOffAmount.toString()) > num(data.writeofflimit)) {
+    return fail('APRM_NotAllowWriteOff');
+  }
+
+  // All validations passed (client-side + the server pre-submit round-trip).
+  // The grid parameters are Window-Reference, so the platform submits the
+  // selection itself; returning undefined lets it proceed (do not call
+  // view.executeProcess here, which would double-submit).
+  return undefined;
+}
+]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="9BED7889E1034FE68BD85D5D16857320">
       <oldValue/>
-      <newValue><![CDATA[export const AddPaymentRulesGeneric = {
-  id: "APRM_ADD_PAYMENT_V1",
+      <newValue><![CDATA[const ZERO = () => BigDecimal.prototype.ZERO;
+const bd = (v) => new BigDecimal(String(v === undefined || v === null || v === '' ? 0 : v));
+const isNum = (v) => v !== null && v !== undefined && v !== '' && !Number.isNaN(Number(v));
+const num = (v) => Number(v);
 
-  // Synchronous UI-level reactive rules, applied by WindowReferenceGrid in the
-  // same React update cycle as the cell edit. Mirrors classic
-  // OB.APRM.AddPayment.glItemAmountOnChange: in the GL Items grid, received_in
-  // and paid_out are mutually exclusive — entering a non-zero value in one
-  // forces the other to 0 on the same row.
-  //
-  // Declaring both DB (received_in/paid_out) and HQL (receivedIn/paidOut)
-  // pairs keeps matching robust because GridCellEditor mirrors writes to both
-  // keys on row.original, but onRecordChange only carries the HQL key.
-  fieldInteractions: {
-    glitem: {
-      mutualExclusion: [
-        ["received_in", "paid_out"],
-        ["receivedIn", "paidOut"],
-      ],
-    },
-  },
+const GRID_SETTLE_ID = 'aprmGridSettle';
+const GRID_SETTLE_DELAY = 0;
 
-  compute: (_context, util) => {
-    const actualPayment = util.valNum("actual_payment", "actualPayment", "ActualPayment");
-    const invoices = util.getGridItems(["amount", "outstandingAmount"], ["order_invoice"]);
+const MC_HANDLER = 'org.openbravo.advpaymentmngt.actionHandler.PaymentMethodMulticurrencyActionHandler';
+const DOCNO_HANDLER = 'org.openbravo.advpaymentmngt.actionHandler.AddPaymentDocumentNoActionHandler';
+const ORG_HANDLER = 'org.openbravo.advpaymentmngt.actionHandler.AddPaymentOrganizationActionHandler';
+const RECEIVEDFROM_HANDLER = 'org.openbravo.advpaymentmngt.actionHandler.ReceivedFromPaymentMethodActionHandler';
+const DISPLAYLOGIC_HANDLER = 'org.openbravo.advpaymentmngt.actionHandler.AddPaymentDisplayLogicActionHandler';
+const LABELS_HANDLER = 'org.openbravo.advpaymentmngt.actionHandler.AddPaymentReloadLabelsActionHandler';
+const ONPROCESS_HANDLER = 'org.openbravo.advpaymentmngt.actionHandler.AddPaymentOnProcessActionHandler';
 
-    const trxtype = util.valStr("trxtype");
-    let isSOTrx = util.valBool("issotrx", "isSOTrx");
-    if (!isSOTrx && trxtype === "RCIN") {
-      isSOTrx = true;
-    }
+const AP = {};
 
-    const usedCreditValue = util.valNum("used_credit", "usedCredit", "UsedCredit");
-    const conversionRate = util.valNum("conversion_rate", "conversionRate", "finPaymentRate") || 1;
-    const currencyPrecision = util.valNum("currency_precision", "currencyPrecision") || 2;
-    const bslamount = util.valNum("bslamount", "bslAmount", "bankStatementLineAmount");
+AP.trxtype = (form) => (form.getItem('trxtype') ? form.getItem('trxtype').getValue() : '');
+AP.grid = (form, param) => form.getItem(param).canvas.viewGrid;
 
-    const receivedFrom = util.valStr("received_from", "receivedFrom", "c_bpartner_id");
-    const overpaymentAction = util.valStr("overpayment_action", "overpaymentAction");
-    const currencyId = util.valStr("currency_id", "currencyId", "c_currency_id");
-    const currencyToId = util.valStr("currency_to_id", "currencyToId", "finPaymentCurrency");
+AP.isMultiCurrency = (form) => {
+  const fromId = form.getItem('c_currency_id') ? form.getItem('c_currency_id').getValue() : undefined;
+  const toId = form.getItem('c_currency_to_id') ? form.getItem('c_currency_to_id').getValue() : undefined;
+  return !!fromId && !!toId && fromId !== toId;
+};
 
-    // "glitem" is the dBColumnName of the Window Reference parameter for GL Items.
-    // We read _allRows (not _selection) because the grid has obuiappShowSelect=false:
-    // every row is meaningful input, equivalent to OB.APRM.AddPayment.updateGLItemsTotal
-    // iterating grid.data.allRows in the classic UI.
-    const glItems = util.getAllGridRows(
-      ["received_in", "paid_out", "receivedIn", "paidOut"],
-      ["glitem"]
-    );
+AP.hasBslAmount = (form) => {
+  const item = form.getItem('bslamount');
+  if (!item) return false;
+  const val = item.getValue();
+  if (val === null || val === undefined || val === '') return false;
+  return bd(val).compareTo(ZERO()) !== 0;
+};
 
-    const creditItems = util.getGridItems(["paymentAmount", "outstandingAmount"], ["credit_to_use"]);
-    let usedCreditCalculated = util.num(0);
+AP.getConvertedAmount = (form, amount, directConversion) => {
+  const currencyPrecision = form.getItem('StdPrecision').getValue();
+  const exchangeRate = bd(form.getItem('conversion_rate').getValue() || 1);
+  if (directConversion) {
+    return amount.multiply(exchangeRate).setScale(currencyPrecision, BigDecimal.prototype.ROUND_HALF_UP);
+  }
+  return amount.divide(exchangeRate, currencyPrecision, BigDecimal.prototype.ROUND_HALF_UP);
+};
 
-    if (creditItems.length > 0) {
-        for (const item of creditItems) {
-            const pAmt = util.num(item.paymentAmount);
-            if (pAmt.eq(0)) {
-                item.paymentAmount = item.outstandingAmount;
-            }
-        }
-        usedCreditCalculated = util.sum(creditItems, "paymentAmount");
-    } else {
-        usedCreditCalculated = util.num(usedCreditValue || 0);
-    }
-
-    const finalUsedCredit = usedCreditCalculated;
-    const totalOutstanding = util.sum(invoices, "outstandingAmount");
-
-    if (invoices.length > 0) {
-        const totalToDistribute = util.num(actualPayment || 0).plus(finalUsedCredit);
-        util.distributeAmount(invoices, totalToDistribute);
-    }
-
-    const amountInvOrds = util.sum(invoices, "amount");
-
-    const amountGLItems = glItems.reduce((total, row) => {
-      // Accept both DB ("received_in"/"paid_out") and HQL ("receivedIn"/"paidOut")
-      // shapes — the new UI's GridCellEditor mirrors writes to both keys.
-      const receivedIn = util.num(row.received_in ?? row.receivedIn ?? 0);
-      const paidOut = util.num(row.paid_out ?? row.paidOut ?? 0);
-      if (isSOTrx) {
-        return total.plus(receivedIn).minus(paidOut);
+AP.updateConvertedAmount = (view, form, recalcExchangeRate) => {
+  const actualPayment = bd(form.getItem('actual_payment').getValue() || 0);
+  const actualConvertedItem = form.getItem('converted_amount');
+  const exchangeRateItem = form.getItem('conversion_rate');
+  let newConvertedAmount = ZERO();
+  let newExchangeRate = BigDecimal.prototype.ONE;
+  const exchangeRate = bd(exchangeRateItem.getValue() || 1);
+  const actualConverted = bd(actualConvertedItem.getValue() || 0);
+  if (!actualConverted || !exchangeRate) return;
+  if (recalcExchangeRate) {
+    if (actualConverted && actualPayment) {
+      if (actualPayment.compareTo(newConvertedAmount) !== 0) {
+        newExchangeRate = actualConverted.divide(actualPayment, 15, 2);
+        exchangeRateItem.setValue(num(newExchangeRate.toString()));
       }
-      return total.minus(receivedIn).plus(paidOut);
-    }, util.num(0));
-
-    const usedCredit = finalUsedCredit;
-    const expectedPayment = totalOutstanding;
-    const total = util.num(amountInvOrds).plus(amountGLItems);
-
-    const actualPaymentBD = util.num(actualPayment);
-    const difference = actualPaymentBD.plus(usedCredit).minus(total);
-
-    let expectedDifference = expectedPayment.plus(usedCredit).minus(amountInvOrds);
-    if (expectedDifference.eq(0)) {
-      expectedDifference = difference;
+    } else {
+      exchangeRateItem.setValue(num(newExchangeRate.toString()));
     }
+  } else if (exchangeRate) {
+    newConvertedAmount = AP.getConvertedAmount(form, actualPayment, true);
+    exchangeRateItem.setValue(num(exchangeRate.toString()));
+    actualConvertedItem.setValue(num(newConvertedAmount.toString()));
+  } else {
+    actualConvertedItem.setValue(num(actualConverted.toString()));
+  }
+};
 
-    let _convertedAmount = actualPaymentBD;
-    const isMultiCurrency = currencyId && currencyToId && currencyId !== currencyToId;
+AP.applyBankAmountToConverted = (form) => {
+  if (!AP.hasBslAmount(form)) return;
+  const bsl = bd(form.getItem('bslamount').getValue() || 0);
+  const convItem = form.getItem('converted_amount');
+  if (!convItem) return;
+  if (bsl.compareTo(ZERO()) === 0) return;
+  form._bslApplying = true;
+  convItem.setValue(num(bsl.abs().toString()));
+  const act = bd(form.getItem('actual_payment').getValue() || 0);
+  if (act.compareTo(ZERO()) > 0) {
+    AP.updateConvertedAmount(null, form, true);
+    form._pendingRecalcRateFromBSL = false;
+  } else {
+    form._pendingRecalcRateFromBSL = true;
+  }
+  form._bslApplying = false;
+};
 
-    if (isMultiCurrency && conversionRate) {
-      _convertedAmount = util.convert(actualPayment, conversionRate, 1, currencyPrecision);
+AP.syncActualWithExpectedIfMC = (form) => {
+  if (!AP.isMultiCurrency(form)) return;
+  const expected = num(form.getItem('expected_payment').getValue() || 0);
+  form._mcAutoSync = true;
+  form.getItem('actual_payment').setValue(expected);
+  form._mcAutoSync = false;
+  form._mcActualTouched = false;
+  if (form.getItem('issotrx').getValue()) {
+    AP.distributeAmount(null, form, true);
+  }
+  AP.updateDifference(form);
+  AP.updateConvertedAmount(null, form, false);
+  AP.applyBankAmountToConverted(form);
+};
+
+AP.recalcDisplayLogicOrReadOnlyLogic = (form, view, affectedParams) => {
+  const params = {};
+  const thisform = form;
+  const thisview = view;
+  const creditUseGrid = AP.grid(form, 'credit_to_use');
+  params.context = view.getContextInfo();
+  delete params.context.order_invoice;
+  delete params.context.credit_to_use;
+  delete params.context.glitem;
+
+  const callback = (response, data) => {
+    if (!data || data.values === null || data.values === undefined) {
+      return;
     }
-
-    const bslAmountBD = util.num(bslamount);
-    const hasBslAmount = !bslAmountBD.eq(0);
-
-    if (hasBslAmount && isMultiCurrency && conversionRate) {
-      _convertedAmount = bslAmountBD.abs();
+    const values = data.values;
+    for (const i in values) {
+      if (Object.prototype.hasOwnProperty.call(values, i)) {
+        const def = values[i];
+        const field = thisform.getItem(i);
+        if (field) {
+          if (def && typeof def === 'object') {
+            if (def.identifier && def.value) {
+              field.setValueFromRecord({ id: def.value, _identifier: def.identifier });
+            }
+          } else {
+            field.setValue(def);
+          }
+        }
+      }
     }
-
-    const negativeAmount = invoices
-      .filter((inv) => util.num(inv.outstandingAmount).lt(0))
-      .reduce((acc, inv) => {
-        return acc.plus(Math.abs(inv.outstandingAmount));
-      }, util.num(0));
-
-    const totalWriteOffAmount = invoices.reduce((total, inv) => {
-      if (!inv.writeoff) return total;
-      const outstanding = util.num(inv.outstandingAmount);
-      const amount = util.num(inv.amount || 0);
-      const writeoffAmt = outstanding.minus(amount);
-      return total.plus(writeoffAmt);
-    }, util.num(0));
-
-    const fmt = (n) => n.toFixed(2);
-
-    return {
-      expected_payment: fmt(expectedPayment),
-      Expected_Payment: fmt(expectedPayment),
-      expectedPayment: fmt(expectedPayment),
-      "Expected Payment": fmt(expectedPayment),
-
-      amount_inv_ords: fmt(amountInvOrds),
-      amountInvOrds: fmt(amountInvOrds),
-      AmountInvOrds: fmt(amountInvOrds),
-      "Amount on Invoices and/or Orders": fmt(amountInvOrds),
-      "Amount Inv Ords": fmt(amountInvOrds),
-
-      amount_gl_items: fmt(amountGLItems),
-      amountGlItems: fmt(amountGLItems),
-      AmountGlItems: fmt(amountGLItems),
-      "Amount on GL Items": fmt(amountGLItems),
-
-      total: fmt(total),
-      Total: fmt(total),
-      TOTAL: fmt(total),
-
-      used_credit: fmt(usedCredit),
-      usedCredit: fmt(usedCredit),
-      "Used Credit": fmt(usedCredit),
-
-      difference: fmt(difference),
-      Difference: fmt(difference),
-
-      expectedDifference: fmt(expectedDifference),
-      ExpectedDifference: fmt(expectedDifference),
-      expected_difference: fmt(expectedDifference),
-      "There is a difference of": fmt(expectedDifference),
-
-      overpayment_action: difference.gt(0) ? "CR" : "",
-      overpayment_action_display_logic: difference.gt(0) ? "Y" : "N",
-
-      _computed: {
-        totalOutstanding: totalOutstanding.toNumber(),
-        negativeAmount: negativeAmount.toNumber(),
-        totalWriteOffAmount: totalWriteOffAmount.toNumber(),
-        hasBslAmount,
-        selectedInvoicesCount: invoices.length,
-        hasReceivedFrom: !!receivedFrom,
-        amountGLItems: amountGLItems.toNumber(),
-        usedCredit: usedCredit.toNumber(),
-      },
-
-      order_invoice: invoices,
-      credit_to_use: creditItems,
-    };
-  },
-
-  validate: (_context, computed, util) => {
-    const validations = [];
-
-    const actualPayment = util.valNum("actual_payment", "actualPayment", "ActualPayment");
-    const overpaymentAction = util.valStr("overpayment_action", "overpaymentAction");
-
-    const _comp = computed._computed || {};
-    const total = typeof computed.total === "string" ? Number.parseFloat(computed.total) : computed.total || 0;
-
-    const actualBD = util.num(actualPayment);
-    const totalBD = util.num(total);
-
-    if (overpaymentAction && !_comp.hasReceivedFrom) {
-      validations.push({
-        id: "APRM_CREDIT_NO_BPARTNER",
-        isValid: false,
-        message: "APRM_CreditWithoutBPartner",
-        severity: "error",
-      });
+    if (thisview && thisview.handleReadOnlyLogic) thisview.handleReadOnlyLogic();
+    if (values.credit_to_use_display_logic && values.credit_to_use_display_logic === 'Y') {
+      creditUseGrid.fetchData();
     }
+    if (thisview && thisview.handleButtonsStatus) thisview.handleButtonsStatus();
+  };
 
-    if (totalBD.gt(actualBD.plus(_comp.usedCredit || 0))) {
-      validations.push({
-        id: "APRM_MORE_ALLOCATED",
-        isValid: false,
-        message: "APRM_JSMOREAMOUTALLOCATED",
-        severity: "error",
-      });
+  view.fireOnPause('recalcDisplayLogicOrReadOnlyLogic' + affectedParams, () => {
+    OB.RemoteCallManager.call(DISPLAYLOGIC_HANDLER, { affectedParams, params }, {}, callback);
+  }, 200);
+};
+
+AP.reloadLabels = (form) => {
+  const params = {
+    businessPartner: 'received_from',
+    financialAccount: 'fin_financial_account_id',
+    issotrx: form.getItem('issotrx').getValue()
+  };
+  const callback = (response, data) => {
+    if (!data || data.values === null || data.values === undefined) {
+      return;
     }
+    form.getItem('received_from').setTitle(data.values.businessPartner);
+    form.getItem('fin_financial_account_id').setTitle(data.values.financialAccount);
+  };
+  OB.RemoteCallManager.call(LABELS_HANDLER, {}, params, callback);
+};
 
-    const invoices = computed.order_invoice || [];
-    for (const invoice of invoices) {
-       const amt = util.num(invoice.amount);
-       const out = util.num(invoice.outstandingAmount);
-       if (amt.minus(out).gt(0.01)) {
-           validations.push({
-               id: "AMOUNT_EXCEEDS_OUTSTANDING",
-               isValid: false,
-               message: "APRM_JSMOREAMOUTALLOCATED",
-               severity: "error",
-               context: { id: invoice.id }
-           });
-       }
+AP.paymentMethodMulticurrency = (view, form, recalcConvRate) => {
+  const financialAccountId = form.getItem('fin_financial_account_id').getValue();
+  const paymentMethodId = form.getItem('fin_paymentmethod_id').getValue();
+  const isSOTrx = form.getItem('issotrx').getValue();
+  let currencyId = form.getItem('c_currency_id').getValue();
+  const paymentDate = form.getItem('payment_date').getValue();
+  const orgId = form.getItem('ad_org_id').getValue();
+  const trxtype = AP.trxtype(form);
+
+  if (paymentDate === undefined) {
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('APRM_PAYMENTDATE_MISSING'));
+    return false;
+  }
+
+  const callback = (response, data) => {
+    if (!data) {
+      return;
     }
+    let isShown = false;
+    if (data.currencyId) {
+      form.getItem('c_currency_id').setValueFromRecord({ id: data.currencyId, _identifier: data.currencyIdIdentifier });
+    }
+    isShown = data.isPayIsMulticurrency && currencyId !== data.currencyToId && currencyId !== undefined;
+    if (data.isWrongFinancialAccount && trxtype === '') {
+      form.getItem('fin_financial_account_id').setValue('');
+    } else if (!data.isWrongFinancialAccount) {
+      form.getItem('c_currency_to_id').setValueFromRecord({ id: data.currencyToId, _identifier: data.currencyToIdentifier });
+      if (recalcConvRate) {
+        form.getItem('conversion_rate').setValue(data.conversionrate);
+        form.getItem('converted_amount').setValue(data.convertedamount);
+        AP.updateConvertedAmount(view, form, false);
+      }
+    }
+    if (isShown) {
+      form.getItem('conversion_rate').show();
+      form.getItem('converted_amount').show();
+      form.getItem('c_currency_to_id').show();
+    } else {
+      form.getItem('conversion_rate').hide();
+      form.getItem('converted_amount').hide();
+      form.getItem('c_currency_to_id').hide();
+    }
+    const becameVisible = isShown && !form._mcShownPrev;
+    if (!isShown) {
+      form._mcSyncedOnce = false;
+      form._mcPendingSyncMC = false;
+    }
+    currencyId = form.getItem('c_currency_id').getValue();
+    if (becameVisible) {
+      form._mcPendingSyncMC = true;
+      form._mcSyncedOnce = false;
+    }
+    form._mcShownPrev = isShown;
+  };
 
-    return validations;
-  },
+  OB.RemoteCallManager.call(MC_HANDLER, {
+    paymentMethodId, currencyId, isSOTrx, financialAccountId, paymentDate, orgId
+  }, {}, callback);
+};
+
+AP.checkSingleActionAvailable = (form) => {
+  const documentAction = form.getItem('document_action');
+  const options = documentAction.getValueMap();
+  if (options && options.length === 1) {
+    const opt = options[0];
+    documentAction.setValueFromRecord({ id: opt.id || opt.value, _identifier: opt.label });
+  } else {
+    documentAction.clearValue();
+  }
+};
+
+AP.updateInvOrderTotal = (form, grid) => {
+  let totalAmt = ZERO();
+  const selectedRecords = grid.getSelectedRecords();
+  const invOrdTotalItem = form.getItem('amount_inv_ords');
+  for (const rec of selectedRecords) {
+    const amt = grid.getEditedCell(rec, 'amount');
+    totalAmt = totalAmt.add(bd(amt));
+  }
+  invOrdTotalItem.setValue(num(totalAmt.toString()));
+  AP.updateTotal(form);
+};
+
+AP.updateTotal = (form) => {
+  const invOrdTotalItem = form.getItem('amount_inv_ords');
+  const glItemsTotalItem = form.getItem('amount_gl_items');
+  const totalItem = form.getItem('total');
+  let totalAmt = bd(invOrdTotalItem.getValue() || 0);
+  totalAmt = totalAmt.add(bd(glItemsTotalItem.getValue() || 0));
+  totalItem.setValue(num(totalAmt.toString()));
+  AP.updateDifference(form);
+};
+
+AP.updateDifference = (form, view) => {
+  const total = bd(form.getItem('total').getValue() || 0);
+  const actualPayment = bd(form.getItem('actual_payment').getValue() || 0);
+  const expectedPayment = bd(form.getItem('expected_payment').getValue() || 0);
+  const credit = bd(form.getItem('used_credit').getValue() || 0);
+  const differenceItem = form.getItem('difference');
+  const expectedDifferenceItem = form.getItem('expectedDifference');
+  const totalGLItems = bd(form.getItem('amount_gl_items').getValue() || 0);
+  const diffAmt = actualPayment.add(credit).subtract(total);
+  const expectedDiffAmt = expectedPayment.add(credit).subtract(total).add(totalGLItems);
+  differenceItem.setValue(num(diffAmt.toString()));
+  if (expectedDiffAmt.signum() === 0) {
+    expectedDifferenceItem.setValue(num(diffAmt.toString()));
+  } else {
+    expectedDifferenceItem.setValue(num(expectedDiffAmt.toString()));
+  }
+  if (diffAmt.signum() !== 0) {
+    AP.updateDifferenceActions(form);
+  }
+  if (view) {
+    AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['overpayment_action_display_logic']);
+  }
+};
+
+AP.updateDifferenceActions = (form) => {
+  const issotrx = form.getItem('issotrx').getValue();
+  const overpaymentAction = form.getItem('overpayment_action');
+  const actualPayment = bd(form.getItem('actual_payment').getValue() || 0);
+  const newValueMap = {};
+  let defaultValue = '';
+  const trxtype = AP.trxtype(form);
+  if (trxtype !== '') {
+    form.isCreditAllowed = form.getItem('received_from').getValue() !== undefined && form.getItem('received_from').getValue() !== null;
+  }
+  const original = form._overpaymentOriginalValueMap || {};
+  if (form.isCreditAllowed) {
+    if (original.CR !== undefined) newValueMap.CR = original.CR;
+    if (issotrx || actualPayment.signum() === 0) {
+      if (original.RE !== undefined) newValueMap.RE = original.RE;
+    } else {
+      defaultValue = 'CR';
+    }
+  }
+  overpaymentAction.setValueMap(newValueMap);
+  overpaymentAction.setValue(defaultValue);
+};
+
+AP.updateActualExpected = (form, view) => {
+  const orderInvoice = AP.grid(form, 'order_invoice');
+  const issotrx = form.getItem('issotrx').getValue();
+  let totalAmountoutstanding = ZERO();
+  let totalAmount = ZERO();
+  const actualPayment = form.getItem('actual_payment');
+  const expectedPayment = form.getItem('expected_payment');
+  const generateCredit = bd(form.getItem('generateCredit').getValue() || 0);
+  const glitemtotal = bd(form.getItem('amount_gl_items').getValue() || 0);
+  const credit = bd(form.getItem('used_credit').getValue() || 0);
+  const bslamount = bd(form.getItem('bslamount').getValue() || 0);
+  const selectedRecords = orderInvoice.getSelectedRecords();
+  for (const rec of selectedRecords) {
+    totalAmountoutstanding = totalAmountoutstanding.add(bd(orderInvoice.getEditedCell(rec, 'outstandingAmount')));
+    totalAmount = totalAmount.add(bd(orderInvoice.getEditedCell(rec, 'amount')));
+  }
+  if (selectedRecords.length > 0) {
+    expectedPayment.setValue(num(totalAmountoutstanding.toString()));
+  } else {
+    expectedPayment.setValue(num('0'));
+  }
+  if (!issotrx) {
+    let actpayment = totalAmount.add(glitemtotal).add(generateCredit);
+    actualPayment.setValue(num(actpayment.toString()));
+    if (credit.compareTo(ZERO()) > 0) {
+      if (credit.compareTo(actpayment) > 0) {
+        actualPayment.setValue(num('0'));
+      } else {
+        actualPayment.setValue(num(actpayment.subtract(credit).toString()));
+      }
+    }
+    if (bslamount.compareTo(ZERO()) !== 0) {
+      const bslAmountConverted = AP.getConvertedAmount(form, bslamount, false);
+      if (actpayment.compareTo(bslAmountConverted.abs()) <= 0) {
+        actpayment = bslAmountConverted.abs();
+        actualPayment.setValue(num(actpayment.toString()));
+      }
+    }
+    AP.updateDifference(form, view);
+    AP.updateConvertedAmount(null, form, false);
+  }
+  if (form._mcSyncInProgress) {
+    // no-op while a multicurrency sync is already running
+  } else if (form._mcPendingSyncMC && AP.isMultiCurrency(form)) {
+    const expNow = num(form.getItem('expected_payment').getValue() || 0);
+    const actNow = num(form.getItem('actual_payment').getValue() || 0);
+    if (expNow > 0 && (actNow === 0 || !form._mcActualTouched)) {
+      form._mcPendingSyncMC = false;
+      form._mcSyncInProgress = true;
+      AP.syncActualWithExpectedIfMC(form);
+      form._mcSyncInProgress = false;
+      form._mcSyncedOnce = true;
+    }
+  }
+  AP.applyBankAmountToConverted(form);
+};
+
+AP.updateGLItemsTotal = (form, view, rowNum, remove) => {
+  let totalAmt = ZERO();
+  const grid = AP.grid(form, 'glitem');
+  const glItemTotalItem = form.getItem('amount_gl_items');
+  const issotrx = form.getItem('issotrx').getValue();
+  const allRows = (grid.data && grid.data.allRows) ? grid.data.allRows : [];
+  const allRecords = allRows.length;
+  for (let i = 0; i < allRecords; i++) {
+    if (remove && i === rowNum) continue;
+    const receivedInAmt = bd(grid.getEditedCell(i, 'received_in') || 0);
+    const paidOutAmt = bd(grid.getEditedCell(i, 'paid_out') || 0);
+    if (issotrx) {
+      totalAmt = totalAmt.add(receivedInAmt).subtract(paidOutAmt);
+    } else {
+      totalAmt = totalAmt.subtract(receivedInAmt).add(paidOutAmt);
+    }
+  }
+  if (allRecords === 0) totalAmt = ZERO();
+  glItemTotalItem.setValue(num(totalAmt.toString()));
+  AP.updateTotal(form);
+  if (view) {
+    AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['overpayment_action_display_logic']);
+  }
+  return true;
+};
+
+AP.updateCreditTotal = (form) => {
+  let totalAmt = ZERO();
+  const grid = AP.grid(form, 'credit_to_use');
+  const selectedRecords = grid.getSelectedRecords();
+  const creditTotalItem = form.getItem('used_credit');
+  for (const rec of selectedRecords) {
+    totalAmt = totalAmt.add(bd(grid.getEditedCell(rec, 'paymentAmount')));
+  }
+  creditTotalItem.setValue(num(totalAmt.toString()));
+  AP.updateTotal(form);
+  return true;
+};
+
+AP.distributeAmount = (view, form, onActualPaymentChange) => {
+  let amount = bd(form.getItem('actual_payment').getValue() || 0);
+  const orderInvoice = AP.grid(form, 'order_invoice');
+  const issotrx = form.getItem('issotrx').getValue();
+  const payment = form.getItem('fin_payment_id').getValue();
+  let negativeamt = ZERO();
+  let differenceamt = ZERO();
+  const creditamt = bd(form.getItem('used_credit').getValue() || 0);
+  const glitemamt = bd(form.getItem('amount_gl_items').getValue() || 0);
+  const orderInvoiceData = (orderInvoice.data && orderInvoice.data.localData) ? orderInvoice.data.localData : [];
+  const total = orderInvoiceData.length;
+  const autoDistributeAmt = OB.PropertyStore.get('APRM_AutoDistributeAmt');
+
+  if (autoDistributeAmt !== 'N' && autoDistributeAmt !== '"N"') {
+    amount = amount.subtract(glitemamt);
+    amount = amount.add(creditamt);
+    if (issotrx && AP.isMultiCurrency(form)) {
+      if (amount.compareTo(ZERO()) === 0) {
+        const exp = bd(form.getItem('expected_payment').getValue() || 0);
+        if (exp.compareTo(ZERO()) > 0) amount = exp;
+      }
+    }
+    for (let i = 0; i < total; i++) {
+      const row = orderInvoiceData[i];
+      if (row && typeof row === 'object' && Object.keys(row).length > 0) {
+        const outstandingAmount = bd(row.outstandingAmount);
+        if (outstandingAmount.signum() < 0) {
+          negativeamt = negativeamt.add(outstandingAmount.abs());
+        }
+      }
+    }
+    if (amount.compareTo(negativeamt.negate()) > 0 && (onActualPaymentChange || payment)) {
+      amount = amount.add(negativeamt);
+    }
+    for (let i = 0; i < total; i++) {
+      const row = orderInvoiceData[i];
+      if (!row || typeof row !== 'object' || Object.keys(row).length === 0) continue;
+      const editValues = orderInvoice.getEditValues(i);
+      let writeoff = editValues ? editValues.writeoff : undefined;
+      let amt = bd((editValues ? editValues.amount : 0) || 0);
+      if (writeoff === null || writeoff === undefined) {
+        writeoff = orderInvoice.getRecord(i).writeoff;
+        amt = bd(orderInvoice.getRecord(i).amount || 0);
+      }
+      if (writeoff && issotrx) {
+        amount = amount.subtract(amt);
+        continue;
+      }
+      let outstandingAmount = bd(orderInvoice.getRecord(i).outstandingAmount);
+      if (payment && !onActualPaymentChange && orderInvoice.getRecord(i).obSelected) {
+        outstandingAmount = bd(orderInvoice.getRecord(i).amount);
+      } else if (outstandingAmount.signum() < 0 && amount.signum() < 0) {
+        if (outstandingAmount.abs().compareTo(amount.abs()) > 0) {
+          differenceamt = outstandingAmount.subtract(amount);
+          outstandingAmount = amount;
+          amount = amount.subtract(differenceamt);
+        }
+      } else if (outstandingAmount.signum() > -1 && amount.signum() > -1 && outstandingAmount.compareTo(amount) > 0) {
+        outstandingAmount = amount;
+      }
+      if (amount.signum() === 0) {
+        if (outstandingAmount.signum() < 0 && (onActualPaymentChange || payment)) {
+          orderInvoice.setEditValue(i, 'amount', num(outstandingAmount.toString()));
+          orderInvoice.selectRecord(i);
+        } else {
+          orderInvoice.deselectRecord(i);
+          orderInvoice.setEditValue(i, 'amount', num('0'));
+        }
+      } else if (amount.signum() === 1) {
+        orderInvoice.setEditValue(i, 'amount', num(outstandingAmount.toString()));
+        orderInvoice.selectRecord(i);
+        if (outstandingAmount.signum() >= 0 || amount.signum() <= 0) {
+          amount = amount.subtract(outstandingAmount);
+        }
+      } else if (outstandingAmount.signum() < 0) {
+        orderInvoice.setEditValue(i, 'amount', num(outstandingAmount.toString()));
+        orderInvoice.selectRecord(i);
+        if (outstandingAmount.signum() <= 0 || amount.signum() <= 0) {
+          amount = amount.subtract(outstandingAmount);
+        }
+      } else {
+        orderInvoice.deselectRecord(i);
+        orderInvoice.setEditValue(i, 'amount', num('0'));
+      }
+    }
+    AP.updateActualExpected(form, view);
+  }
+  AP.updateInvOrderTotal(form, orderInvoice);
+};
+
+AP.doSelectionChanged = (record, state, view) => {
+  const form = view.theForm;
+  const orderInvoice = AP.grid(form, 'order_invoice');
+  let amount = bd(form.getItem('actual_payment').getValue() || 0);
+  const distributedAmount = bd(form.getItem('amount_inv_ords').getValue() || 0);
+  const issotrx = form.getItem('issotrx').getValue();
+  let outstandingAmount = bd(record.outstandingAmount);
+  const glitem = bd(form.getItem('amount_gl_items').getValue() || 0);
+  const credit = bd(form.getItem('used_credit').getValue() || 0);
+  const bslamount = bd(form.getItem('bslamount').getValue() || 0);
+
+  amount = amount.subtract(distributedAmount).subtract(glitem).add(credit);
+
+  if (issotrx) {
+    if (amount.signum() !== 0 && state) {
+      if (outstandingAmount.signum() < 0 && amount.signum() < 0) {
+        if (outstandingAmount.abs().compareTo(amount.abs()) > 0) outstandingAmount = amount;
+      } else if (outstandingAmount.compareTo(amount) > 0) {
+        outstandingAmount = amount;
+      }
+      orderInvoice.setEditValue(orderInvoice.getRecordIndex(record), 'amount', num(outstandingAmount.toString()));
+    }
+  } else if (state) {
+    if (bslamount.compareTo(ZERO()) !== 0) {
+      if (outstandingAmount.compareTo(amount) > 0) {
+        orderInvoice.setEditValue(orderInvoice.getRecordIndex(record), 'amount', num(amount.toString()));
+      } else {
+        orderInvoice.setEditValue(orderInvoice.getRecordIndex(record), 'amount', num(outstandingAmount.toString()));
+      }
+    } else {
+      orderInvoice.setEditValue(orderInvoice.getRecordIndex(record), 'amount', num(outstandingAmount.toString()));
+    }
+  }
+  AP.updateInvOrderTotal(form, orderInvoice);
+  AP.updateActualExpected(form, view);
+  AP.updateDifference(form, view);
+  AP.applyBankAmountToConverted(form);
+};
+
+AP.doSelectionChangedCredit = (record, state, view) => {
+  const form = view.theForm;
+  const issotrx = form.getItem('issotrx').getValue();
+  const grid = AP.grid(form, 'credit_to_use');
+  const outstanding = bd(record.outstandingAmount);
+  if (state) {
+    grid.setEditValue(grid.getRecordIndex(record), 'paymentAmount', num(outstanding.toString()));
+  } else {
+    grid.setEditValue(grid.getRecordIndex(record), 'paymentAmount', num('0'));
+  }
+  AP.updateCreditTotal(form);
+  AP.updateActualExpected(form, view);
+  if (issotrx) {
+    AP.distributeAmount(view, form, true);
+  }
+};
+
+// Defers `fn` until after the freshly delivered grid rows have committed to the
+// grid controller's read store. At onGridLoad firing time the controller-backed
+// reads/writes (getRecord/getSelectedRecords/setEditValue) still see the pre-fetch
+// rows, so any settling that reads or writes edited cells must run on the next
+// tick. This mirrors the classic ordInvDataArrived deferral (isc.Timer.setTimeout).
+AP.afterGridSettle = (grid, paramName, fn) => {
+  if (grid && grid.fireOnPause) {
+    grid.fireOnPause(GRID_SETTLE_ID + ':' + paramName, fn, GRID_SETTLE_DELAY);
+  } else {
+    fn();
+  }
+};
+
+// Mirrors classic ordInvDataArrived: for each backend pre-selected order/invoice row
+// (read from grid.getSelectedRecords() AFTER the deferral — classic also reads
+// getSelectedRecords() after dataArrived), keep/seed its editable `amount` (its own
+// amount, falling back to the outstanding) and re-assert selection, then refresh the
+// invoice/order total.
+AP.seedPreselectedOrderInvoice = (form, grid, selectedRecords) => {
+  const selected = selectedRecords || (grid.getSelectedRecords ? grid.getSelectedRecords() : []);
+  for (let i = 0; i < selected.length; i++) {
+    const record = selected[i];
+    if (!record || typeof record !== 'object') continue;
+    const idx = grid.getRecordIndex(record);
+    const ownAmount = bd(record.amount || 0);
+    const outstanding = bd(record.outstandingAmount || 0);
+    const amount = ownAmount.compareTo(ZERO()) !== 0 ? ownAmount : outstanding;
+    grid.setEditValue(idx, 'amount', num(amount.toString()));
+    grid.selectRecord(idx);
+  }
+  AP.updateInvOrderTotal(form, grid);
+};
+
+// Mirrors classic selectionChangedCredit for backend pre-selected credit rows: seed
+// each selected credit's editable paymentAmount from its outstanding amount (classic
+// creditOnLoadGrid leaves seeding to selectionChanged, which never fires for rows the
+// datasource delivers already selected → new-#8).
+AP.seedPreselectedCredit = (form, grid, selectedRecords) => {
+  const selected = selectedRecords || (grid.getSelectedRecords ? grid.getSelectedRecords() : []);
+  for (let i = 0; i < selected.length; i++) {
+    const record = selected[i];
+    if (!record || typeof record !== 'object') continue;
+    const idx = grid.getRecordIndex(record);
+    const outstanding = bd(record.outstandingAmount || 0);
+    grid.setEditValue(idx, 'paymentAmount', num(outstanding.toString()));
+  }
+};
+
+AP.orderInvoiceGridValidation = (item, validator, value, record) => {
+  const view = item.grid ? item.grid.view : null;
+  const messageBar = view ? view.messageBar : null;
+  const outstanding = bd(record.outstandingAmount);
+  const paidamount = bd(record.amount);
+  if (!isNum(record.amount)) {
+    if (messageBar) messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('APRM_NotValidNumber'));
+    return false;
+  }
+  if (outstanding.abs().compareTo(paidamount.abs()) < 0) {
+    if (messageBar) messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('APRM_MoreAmountThanOutstanding'));
+    return false;
+  }
+  if (paidamount.signum() === 0 && record.writeoff === false) {
+    if (messageBar) messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('APRM_JSZEROUNDERPAYMENT'));
+    return false;
+  }
+  if ((paidamount.signum() < 0 && outstanding.signum() > 0) || (paidamount.signum() > 0 && outstanding.signum() < 0)) {
+    if (messageBar) messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('APRM_ValueOutOfRange'));
+    return false;
+  }
+  return true;
+};
+
+AP.creditValidation = (item, validator, value, record) => {
+  const view = item.grid ? item.grid.view : null;
+  const messageBar = view ? view.messageBar : null;
+  const outstanding = bd(record.outstandingAmount);
+  const paidamount = bd(record.paymentAmount);
+  if (!isNum(record.paymentAmount)) {
+    if (messageBar) messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('APRM_NotValidNumber'));
+    return false;
+  }
+  if (outstanding.abs().compareTo(paidamount.abs()) < 0) {
+    if (messageBar) messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('APRM_MoreAmountThanOutstanding'));
+    return false;
+  }
+  if (paidamount.signum() === 0) {
+    if (messageBar) messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('aprm_biggerthanzero'));
+    return false;
+  }
+  return true;
+};
+
+AP.glItemAmountOnChange = (item, view, form, grid) => {
+  const receivedInAmt = bd(grid.getEditedCell(item.rowNum, 'received_in') || 0);
+  const paidOutAmt = bd(grid.getEditedCell(item.rowNum, 'paid_out') || 0);
+  if (item.columnName === 'received_in' && receivedInAmt.signum() !== 0) {
+    grid.setEditValue(item.rowNum, 'paidOut', num('0'));
+  } else if (item.columnName === 'paid_out' && paidOutAmt.signum() !== 0) {
+    grid.setEditValue(item.rowNum, 'receivedIn', num('0'));
+  }
+  AP.updateGLItemsTotal(form, view, item.rowNum, false);
+  AP.updateActualExpected(form, view);
+  AP.updateDifference(form, view);
+  return true;
+};
+
+AP.orderInvoiceAmountOnChange = (item, view, form, grid) => {
+  AP.updateActualExpected(form, view);
+  AP.updateInvOrderTotal(form, grid);
+};
+
+AP.updateCreditOnChange = (item, view, form, grid) => {
+  const issotrx = form.getItem('issotrx').getValue();
+  AP.updateCreditTotal(form);
+  if (issotrx) {
+    AP.distributeAmount(view, form, true);
+  }
+  AP.updateDifference(form, view);
+  AP.updateActualExpected(form, view);
+  return true;
+};
+
+AP.refetchOrderInvoiceGrid = (form) => {
+  const ordinvgrid = AP.grid(form, 'order_invoice');
+  ordinvgrid.invalidateCache();
+};
+
+AP.registerGridHooks = (grid, paramName, view) => {
+  if (paramName === 'order_invoice') {
+    grid.onSelectionToggle((record, state) => AP.doSelectionChanged(record, state, view));
+    grid.setColumnOnChange('amount', (item, v, form, g) => AP.orderInvoiceAmountOnChange(item, view, form, g));
+    grid.setColumnValidator('amount', (item, validator, value, record) => AP.orderInvoiceGridValidation(item, validator, value, record));
+  } else if (paramName === 'glitem') {
+    grid.setColumnOnChange('received_in', (item, v, form, g) => AP.glItemAmountOnChange(item, view, form, g));
+    grid.setColumnOnChange('paid_out', (item, v, form, g) => AP.glItemAmountOnChange(item, view, form, g));
+  } else if (paramName === 'credit_to_use') {
+    grid.onSelectionToggle((record, state) => AP.doSelectionChangedCredit(record, state, view));
+    grid.setColumnOnChange('paymentAmount', (item, v, form, g) => AP.updateCreditOnChange(item, view, form, g));
+    grid.setColumnValidator('paymentAmount', (item, validator, value, record) => AP.creditValidation(item, validator, value, record));
+  }
+};
+
+OB.APRM = OB.APRM || {};
+OB.APRM.AddPayment = AP;
+
+return { AP, bd, num, isNum, ZERO, GRID_SETTLE_ID, GRID_SETTLE_DELAY };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="9BED7889E1034FE68BD85D5D16857320">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="9C260D0E9C054A6F88AFC8E3B23A0E9A">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const AMOUNT_NOT_EQUALS = 'OBFBPS_Err_AmountNotEquals';
+  const SELECT_INVOICE = 'OBFBPS_Err_SelectInvoice';
+  const purchaseInvoiceGrid = getInvoiceGrid(view, PURCHASE_INVOICE);
+  const salesInvoiceGrid = getInvoiceGrid(view, SALES_INVOICE);
+  const amountPurchase = getSelectedAmount(purchaseInvoiceGrid);
+  const amountSales = getSelectedAmount(salesInvoiceGrid);
+  view.theForm.getItem(PURCHASE_AMOUNT).setValue(amountPurchase);
+  view.theForm.getItem(SALES_AMOUNT).setValue(amountSales);
+  const exceedInvoice = checkAmounts(view, purchaseInvoiceGrid, salesInvoiceGrid);
+  if (exceedInvoice) {
+    return { severity: 'error', text: OB.I18N.getLabel(AMOUNT_EXCEED_PENDING, [exceedInvoice]) };
+  }
+  if (amountPurchase !== amountSales) {
+    const text = OB.I18N.getLabel(AMOUNT_NOT_EQUALS);
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text };
+  }
+  if (amountPurchase === 0) {
+    const text = OB.I18N.getLabel(SELECT_INVOICE);
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text };
+  }
+  return undefined;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="9C260D0E9C054A6F88AFC8E3B23A0E9A">
+      <oldValue/>
+      <newValue><![CDATA[const PURCHASE_INVOICE = 'OBFBPS_PurchaseInvoice';
+const SALES_INVOICE = 'OBFBPS_SalesInvoice';
+const PURCHASE_AMOUNT = 'OBFBPS_PurchaseAmount';
+const SALES_AMOUNT = 'OBFBPS_SalesAmount';
+const PEND_AMOUNT = 'OBFBPS_PendAmount';
+const AMOUNT_EXCEED_PENDING = 'OBFBPS_Err_AmountExceedPending';
+const SETTLEMENT_AMOUNT = 'settlementAmount';
+
+const getInvoiceGrid = (view, paramName) => view.theForm.getItem(paramName).canvas.viewGrid;
+
+const getSelectedAmount = grid => {
+  let amount = BigDecimal.prototype.ZERO;
+  const records = grid.getSelectedRecords();
+  records.forEach(record => {
+    const index = grid.getRecordIndex(record);
+    const item = grid.getEditValues(index);
+    const editedAmount = item && item[SETTLEMENT_AMOUNT];
+    const value = editedAmount ? editedAmount : record[SETTLEMENT_AMOUNT] || 0;
+    amount = amount.add(new BigDecimal(String(value)));
+  });
+  return Number(amount.toString());
+};
+
+const checkInvoiceAmount = grid => {
+  let result = null;
+  const records = grid.getSelectedRecords();
+  records.every(record => {
+    const index = grid.getRecordIndex(record);
+    const item = grid.getEditValues(index);
+    const editedAmount = item && item[SETTLEMENT_AMOUNT];
+    if (editedAmount && editedAmount > record.amount) {
+      result = record.documentNo;
+      return false;
+    }
+    return true;
+  });
+  return result;
+};
+
+const checkAmounts = (view, purchaseInvoiceGrid, salesInvoiceGrid) => {
+  view.messageBar.hide();
+  const grids = [purchaseInvoiceGrid, salesInvoiceGrid];
+  for (let i = 0; i < grids.length; i++) {
+    const invoice = checkInvoiceAmount(grids[i]);
+    if (invoice) {
+      const text = OB.I18N.getLabel(AMOUNT_EXCEED_PENDING, [invoice]);
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+      return invoice;
+    }
+  }
+  return null;
+};
+
+const setAmounts = view => {
+  const purchaseInvoiceGrid = getInvoiceGrid(view, PURCHASE_INVOICE);
+  const salesInvoiceGrid = getInvoiceGrid(view, SALES_INVOICE);
+  const amountPurchase = getSelectedAmount(purchaseInvoiceGrid);
+  const amountSales = getSelectedAmount(salesInvoiceGrid);
+  view.theForm.getItem(PURCHASE_AMOUNT).setValue(amountPurchase);
+  view.theForm.getItem(SALES_AMOUNT).setValue(amountSales);
+  view.theForm.getItem(PEND_AMOUNT).setValue(amountSales - amountPurchase);
+};
+
+// Live selection-toggle recompute. The module body runs once per modal open, so
+// recomputeAmounts is a single stable reference; passing that same reference to
+// every grid's grid.onSelectionToggle lets the substrate's reference-dedup
+// collapse repeated registrations across grid reloads. It reads the latest view
+// captured on grid load, so it always recomputes against a current view proxy.
+let lastView = null;
+const setLastView = view => { lastView = view; };
+const recomputeAmounts = () => { if (lastView) setAmounts(lastView); };
+
+// Live recompute when the user edits a row's Settlement Amount cell. Ported
+// 1:1 from classic amountChange(item, view, form, grid): recompute every total
+// (setAmounts) and revalidate the over-pending banner (checkAmounts), ignoring
+// the return value exactly as classic did. Registered via grid.setColumnOnChange
+// under SETTLEMENT_AMOUNT, so it is one stable module-scope reference reused by
+// both grids' on_grid_load (re-registration is idempotent by column key).
+const onSettlementAmountChange = (item, view, form, grid) => {
+  setAmounts(view);
+  const purchaseInvoiceGrid = getInvoiceGrid(view, PURCHASE_INVOICE);
+  const salesInvoiceGrid = getInvoiceGrid(view, SALES_INVOICE);
+  checkAmounts(view, purchaseInvoiceGrid, salesInvoiceGrid);
+};
+
+return {
+  PURCHASE_INVOICE,
+  SALES_INVOICE,
+  PURCHASE_AMOUNT,
+  SALES_AMOUNT,
+  AMOUNT_EXCEED_PENDING,
+  SETTLEMENT_AMOUNT,
+  getInvoiceGrid,
+  getSelectedAmount,
+  checkInvoiceAmount,
+  checkAmounts,
+  setAmounts,
+  setLastView,
+  recomputeAmounts,
+  onSettlementAmountChange
 };]]></newValue>
     </columnDataChange>
-    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="CC73C4845CDC487395804946EACB225F">
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="9C260D0E9C054A6F88AFC8E3B23A0E9A">
       <oldValue/>
-      <newValue><![CDATA[export const FundsTransferRules = {
-  compute: (context, util) => {
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="A2C19D0EF6594D14A64BC62E99A89CC3">
+      <oldValue/>
+      <newValue><![CDATA[const UOM_MANAGEMENT = 'UomManagement';
+const RETURNABLE_HANDLER =
+  'org.openbravo.common.actionhandler.ServiceReturnableActionHandler';
+const LABEL_OUT_OF_RANGE = 'OBUIAPP_RM_OutOfRange';
+const LABEL_OUT_OF_RANGE_AUM = 'OBUIAPP_RM_OutOfRange_AUM';
 
-      const description = util.valStr("description");
-      
-      const currencyId = util.val("c_currency_from_id") || util.val("Currency From") || util.val("inpcCurrencyId") || util.val("c_currency_id");
-      const currencyIdentifier = util.val("Currency From$_identifier") || util.val("currency$_identifier") || util.val("c_currency_id_identifier");
+const ZERO = () => BigDecimal.prototype.ZERO;
+const ONE = () => BigDecimal.prototype.ONE;
+const bd = (value) => new BigDecimal(String(value));
 
-      // Default description logic
-      let newDescription = description;
-      if (!newDescription) {
-        newDescription = "Funds Transfer Transaction"; 
-      }
+// Faithful reproduction of the classic SmartClient `isc.isA.Number(x)` type-check,
+// which the new-UI `isc` shim does not expose. Pure, self-contained, no platform dependency.
+const isNum = (value) => typeof value === 'number' && isFinite(value);
 
-      const updates = {
-         description: newDescription
-      };
+const isUomManagementEnabled = () =>
+  OB.PropertyStore.get(UOM_MANAGEMENT) === 'Y';
 
-      if (currencyId) {
-          if (currencyIdentifier) {
-              updates.c_currency_to_id = { id: currencyId, identifier: currencyIdentifier }; 
-          } else {
-              updates.c_currency_to_id = currencyId;
-          }
-      }
+const appliesUom = (record) =>
+  isUomManagementEnabled() && record.returnedUOM !== record.uOM;
 
-      return updates;
+const showOutOfRange = (view, record, remaining, newReturnedQty) => {
+  if (appliesUom(record)) {
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_ERROR,
+      null,
+      OB.I18N.getLabel(LABEL_OUT_OF_RANGE_AUM, [
+        newReturnedQty.toString(),
+        record.uOM$_identifier,
+        remaining.toString()
+      ])
+    );
+  } else {
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_ERROR,
+      null,
+      OB.I18N.getLabel(LABEL_OUT_OF_RANGE, [remaining.toString()])
+    );
+  }
+};
+
+const returnedUomValidate = (item, validator, value, record) => {
+  const view = item.grid.view;
+  const movementQty = isNum(record.movementQuantity)
+    ? bd(record.movementQuantity)
+    : ZERO();
+  const returnedQty = isNum(record.returnQtyOtherRM)
+    ? bd(record.returnQtyOtherRM)
+    : ZERO();
+  let newReturnedQty = isNum(record.returned) ? bd(record.returned) : ZERO();
+
+  if (appliesUom(record)) {
+    newReturnedQty = newReturnedQty.multiply(
+      isNum(record.aumConversionRate) ? bd(record.aumConversionRate) : ONE()
+    );
+  }
+
+  const remaining = movementQty.subtract(returnedQty);
+  if (newReturnedQty.compareTo(remaining) <= 0 && record.returned > 0) {
+    view.messageBar.hide(true);
+    return true;
+  }
+  showOutOfRange(view, record, remaining, newReturnedQty);
+  return false;
+};
+
+const orderQtyValidate = (item, validator, value, record) => {
+  const view = item.grid.view;
+  if (!isNum(value)) {
+    return false;
+  }
+  if (record.goodsShipmentLine === null || record.goodsShipmentLine === '') {
+    return value !== null && value > 0;
+  }
+  const movementQty =
+    record.movementQuantity !== null ? bd(record.movementQuantity) : ZERO();
+  const returnedQty =
+    record.returnQtyOtherRM !== null ? bd(record.returnQtyOtherRM) : ZERO();
+  let newReturnedQty = bd(value);
+
+  if (appliesUom(record)) {
+    newReturnedQty = newReturnedQty.multiply(bd(record.aumConversionRate));
+  }
+
+  const remaining = movementQty.subtract(returnedQty);
+  if (value !== null && newReturnedQty.compareTo(remaining) <= 0 && value > 0) {
+    view.messageBar.hide(true);
+    return true;
+  }
+  showOutOfRange(view, record, remaining, newReturnedQty);
+  return false;
+};
+
+const orderSelectionChange = (grid, view, record, state) => {
+  if (!state) {
+    return;
+  }
+  let contextInfo = view.parentWindow.activeView.getContextInfo(
+    false,
+    true,
+    true,
+    true
+  );
+  if (!contextInfo.inpdateordered) {
+    contextInfo = view.parentWindow.activeView.parentView.getContextInfo(
+      false,
+      true,
+      true,
+      true
+    );
+  }
+  if (!record.returnReason) {
+    record.returnReason = contextInfo.inpcReturnReasonId;
+  }
+  OB.RemoteCallManager.call(
+    RETURNABLE_HANDLER,
+    {
+      rfcOrderDate: contextInfo.inpdateordered,
+      goodsShipmentId: record.id,
+      productId: record.product
     },
-
-    validate: (context, computed, util) => {
-      const validations = [];
-      return validations;
+    {},
+    (response, data) => {
+      if (!data.message) {
+        return;
+      }
+      if (data.message.severity === isc.OBMessageBar.TYPE_ERROR) {
+        view.messageBar.setMessage(
+          isc.OBMessageBar.TYPE_ERROR,
+          data.message.title,
+          data.message.text
+        );
+        grid.deselectRecord(grid.getRecordIndex(record));
+      } else {
+        view.messageBar.setMessage(
+          isc.OBMessageBar.TYPE_WARNING,
+          data.message.title,
+          data.message.text
+        );
+      }
     }
+  );
+};
+
+return {
+  returnedUomValidate,
+  orderQtyValidate,
+  orderSelectionChange
 };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="A2C19D0EF6594D14A64BC62E99A89CC3">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="A5A9B914DEAF4C16B028C9D8A4F39A6F">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const TABLE_ID = "318";
+  const HANDLER = "com.smf.jobs.defaults.ProcessInvoicesDefaults";
+  const form = view.theForm;
+  const docActionField = form.getItem("DocAction");
+  const selectedRecords = view.selectedRecords || [];
+  const isProcessing = "";
+
+  const documentStatuses = [];
+  const documentActions = [];
+  for (const record of selectedRecords) {
+    if (!documentStatuses.includes(record.documentStatus)) {
+      documentStatuses.push(record.documentStatus);
+    }
+    if (!documentActions.includes(record.documentAction)) {
+      documentActions.push(record.documentAction);
+    }
+  }
+
+  form.getItem("VoidDate").hide();
+  form.getItem("VoidAccountingDate").hide();
+  form.getItem("POReference").hide();
+
+  OB.RemoteCallManager.call(
+    HANDLER,
+    {
+      documentStatuses: documentStatuses,
+      isProcessing: isProcessing,
+      tableId: TABLE_ID,
+    },
+    {},
+    (response, data, request) => {
+      const actions = data.actions || [];
+      const currentValues = docActionField.getValueMap();
+      const newValues = [];
+
+      for (const action of actions) {
+        const match = currentValues.find((o) => o.value === action || o.id === action);
+        if (match) {
+          newValues.push(match);
+        }
+      }
+
+      docActionField.setValueMap(newValues);
+
+      const firstAction = documentActions[0];
+      const hasFirstAction = newValues.some((o) => o.value === firstAction || o.id === firstAction);
+      if (hasFirstAction) {
+        docActionField.setValueProgrammatically(firstAction);
+      } else {
+        docActionField.setValueProgrammatically(docActionField.getFirstOptionValue());
+      }
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="A5A9B914DEAF4C16B028C9D8A4F39A6F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="AB2EFCAABB7B4EC0A9B30CFB82963FB6">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  view.messageBar.setMessage(
+    isc.OBMessageBar.TYPE_INFO,
+    null,
+    OB.I18N.getLabel('CreateFromMatchPOQtys')
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="AB2EFCAABB7B4EC0A9B30CFB82963FB6">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const GL_ITEM_PARAM = 'c_glitem_id';
+  const HANDLER = 'org.openbravo.common.actionhandler.CheckAvailableCreditActionHandler';
+  const form = view.theForm;
+  const context = view.parentWindow.view.getContextInfo();
+  const businessPartnerId = context.C_BPartner_ID || context.inpcBpartnerId;
+  // The Currency parameter defaults to the BP currency (@BP_Currency_ID@). Its form value may
+  // not be synced yet when onLoad runs, so fall back to the launching record's currency from the
+  // context (keyed by inputName, e.g. inpbpCurrencyId — the same key onProcess reads). `null`
+  // (not undefined) keeps the key in the JSON payload; the handler treats null/empty as
+  // availableCredit:false. Classic always sends the key.
+  const currencyId = form.getItem('C_Currency_ID').getValue() || context.inpbpCurrencyId || null;
+  const glItem = form.getItem(GL_ITEM_PARAM);
+
+  const callback = (response, data) => {
+    if (data.availableCredit) {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_WARNING, null, OB.I18N.getLabel('BPCurrencyChange'));
+      glItem.show();
+      glItem.setRequired(true);
+    } else {
+      glItem.hide();
+    }
+    form.redraw();
+    view.handleButtonsStatus();
+  };
+
+  OB.RemoteCallManager.call(HANDLER, {
+    businessPartnerId: businessPartnerId,
+    currencyId: currencyId
+  }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const form = view.theForm;
+  const context = view.parentWindow.view.getContextInfo();
+  const currencyFromId = context.inpbpCurrencyId;
+  const currencyToId = form.getItem('C_Currency_ID').getValue();
+  const glItemId = form.getItem('c_glitem_id').getValue();
+  const setAmount = form.getItem('Amount').getValue();
+  const currentBalance = context.inpsoCreditused;
+  const foreignAmount = form.getItem('Foreign_Amount').getValue();
+
+  if (currencyFromId !== currencyToId && glItemId && setAmount === true && currentBalance === 0 && foreignAmount !== 0) {
+    const text = OB.I18N.getLabel('BPCurrencyChangeRate');
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text };
+  }
+
+  const response = await view.executeProcess();
+  return response && response.message;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="C4265E27C8134096B49DFBF69369DFC6">
+      <oldValue/>
+      <newValue><![CDATA[const RFC_WINDOW_ID = 'FF808081330213E60133021822E40007';
+const SERVICE_PRICE_HANDLER = 'org.openbravo.common.actionhandler.ServiceRelatedLinePriceActionHandler';
+
+const ZERO = () => BigDecimal.prototype.ZERO;
+const bd = (value) => new BigDecimal(String(value));
+
+const grid = (view) => view.theForm.getItem('grid').canvas.viewGrid;
+
+const updateTotalLinesAmount = (view) => {
+  const form = view.theForm;
+  const g = grid(view);
+  const amountField = g.getFieldByColumnName('amount');
+  const discountField = g.getFieldByColumnName('discountsAmt');
+  const priceField = g.getFieldByColumnName('price');
+  const relatedQtyField = g.getFieldByColumnName('relatedQuantity');
+  const unitDiscountAmtField = g.getFieldByColumnName('unitDiscountsAmt');
+  const selectedRecords = g.getSelectedRecords();
+
+  let totalLinesAmt = ZERO();
+  let totalLinesDiscountAmt = ZERO();
+  let totalLinesPriceAmt = ZERO();
+  let totalLinesRelatedQty = ZERO();
+  let totalLinesUnitDiscountAmt = ZERO();
+
+  selectedRecords.forEach((record) => {
+    const index = g.getRecordIndex(record);
+    totalLinesAmt = totalLinesAmt.add(bd(g.getEditedCell(index, amountField)));
+    totalLinesDiscountAmt = totalLinesDiscountAmt.add(bd(g.getEditedCell(index, discountField)));
+    totalLinesPriceAmt = totalLinesPriceAmt.add(bd(g.getEditedCell(index, priceField)));
+    totalLinesRelatedQty = totalLinesRelatedQty.add(bd(g.getEditedCell(index, relatedQtyField)));
+    totalLinesUnitDiscountAmt = totalLinesUnitDiscountAmt.add(bd(g.getEditedCell(index, unitDiscountAmtField)));
+  });
+
+  form.getItem('totallinesamount').setValue(Number(totalLinesAmt.toString()));
+  form.getItem('totaldiscountsamount').setValue(Number(totalLinesDiscountAmt.toString()));
+  form.getItem('totapriceamount').setValue(Number(totalLinesPriceAmt.toString()));
+  form.getItem('totalrelatedqty').setValue(Number(totalLinesRelatedQty.toString()));
+  form.getItem('totalUnitDiscountsAmt').setValue(Number(totalLinesUnitDiscountAmt.toString()));
+};
+
+const buildRelatedLinesInfo = (g) => {
+  const info = {
+    lineAmount: [],
+    lineDiscounts: [],
+    linePriceamount: [],
+    lineRelatedqty: [],
+    lineUnitdiscountsamt: [],
+    relatedLines: []
+  };
+  g.getSelectedRecords().forEach((selectedRecord) => {
+    info.lineAmount.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('amount')));
+    info.lineDiscounts.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('discountsAmt')));
+    info.linePriceamount.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('price')));
+    info.lineRelatedqty.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('relatedQuantity')));
+    info.lineUnitdiscountsamt.push(g.getEditedCell(selectedRecord, g.getFieldByColumnName('unitDiscountsAmt')));
+    info.relatedLines.push(selectedRecord.id);
+  });
+  return info;
+};
+
+const updateServicePrice = (view, record, state) => {
+  const form = view.theForm;
+  const g = grid(view);
+  const totalServiceAmount = form.getItem('totalserviceamount');
+  const recordId = record ? record.id : null;
+
+  let contextInfo = view.parentWindow.activeView.getContextInfo();
+  if (!contextInfo.inpTabId) {
+    contextInfo = view.parentWindow.activeView.parentView.getContextInfo();
+  }
+
+  const parameters = {
+    orderlineId: form.getItem('orderlineId').getValue(),
+    amount: form.getItem('totallinesamount').getValue(),
+    discounts: form.getItem('totaldiscountsamount').getValue(),
+    priceamount: form.getItem('totapriceamount').getValue(),
+    relatedqty: form.getItem('totalrelatedqty').getValue(),
+    unitdiscountsamt: form.getItem('totalUnitDiscountsAmt').getValue(),
+    orderLineToRelateId: recordId,
+    tabId: contextInfo.inpTabId,
+    state: state,
+    relatedLinesInfo: buildRelatedLinesInfo(g)
+  };
+
+  OB.RemoteCallManager.call(SERVICE_PRICE_HANDLER, parameters, {}, (response, data) => {
+    if (data.amount || data.amount === 0) {
+      totalServiceAmount.setValue(Number(data.amount));
+      if (data.message) {
+        view.messageBar.setMessage(isc.OBMessageBar.TYPE_WARNING, data.message.title, data.message.text);
+      }
+    } else {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, data.message.title, data.message.text);
+      if (record) {
+        g.deselectRecord(g.getRecordIndex(record));
+      }
+    }
+  });
+};
+
+const relatedQuantityOnSelect = (view, record, state) => {
+  const g = grid(view);
+  const index = g.getRecordIndex(record);
+  if (view.windowId !== RFC_WINDOW_ID && state) {
+    g.setEditValue(index, 'relatedQuantity', Number(bd(record.originalOrderedQuantity).toString()));
+  } else {
+    g.setEditValue(index, 'relatedQuantity', 0);
+  }
+  updateTotalLinesAmount(view);
+  updateServicePrice(view, record, state);
+};
+
+const quantityCellOnChange = (item, view, form, g) => {
+  const index = g.getRecordIndex(item.record);
+  const newQty = bd(item.getValue());
+  const precision = form.getItem('pricePrecision').getValue();
+  const newAmount = newQty.multiply(bd(item.record.price)).setScale(precision, BigDecimal.prototype.ROUND_HALF_UP);
+  const newDiscount = newQty.multiply(bd(item.record.unitDiscountsAmt)).setScale(precision, BigDecimal.prototype.ROUND_HALF_UP);
+  g.setEditValue(index, 'amount', Number(newAmount.toString()));
+  g.setEditValue(index, 'discountsAmount', Number(newDiscount.toString()));
+  updateTotalLinesAmount(view);
+  updateServicePrice(view, item.record, null);
+};
+
+const isNumber = (value) => typeof value === 'number' && !isNaN(value);
+
+const quantityValidate = (item, validator, value, record) => {
+  if (!isNumber(value)) {
+    return false;
+  }
+  const quantity = bd(value);
+  const returnedQty = bd(record.returnQtyOtherRM);
+  const recordQty = bd(record.originalOrderedQuantity);
+  const windowId = item.grid.view.windowId;
+  const messageBar = item.grid.view.messageBar;
+  const isRfc = windowId === RFC_WINDOW_ID;
+
+  if (isRfc && (value < 0 || quantity.compareTo(recordQty.subtract(returnedQty)) > 0)) {
+    messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('OBUIAPP_RM_OutOfRange', [recordQty.subtract(returnedQty).toString()]));
+    return false;
+  }
+  if (!isRfc && recordQty.compareTo(ZERO()) < 0 && (quantity.compareTo(recordQty) < 0 || value > 0)) {
+    messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('ServiceQuantityLessThanOrdered', [recordQty.toString()]));
+    return false;
+  }
+  if (!isRfc && recordQty.compareTo(ZERO()) > 0 && (quantity.compareTo(recordQty) > 0 || value < 0)) {
+    messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, OB.I18N.getLabel('ServiceQuantityMoreThanOrdered', [recordQty.toString()]));
+    return false;
+  }
+  return true;
+};
+
+return {
+  updateTotalLinesAmount,
+  updateServicePrice,
+  relatedQuantityOnSelect,
+  quantityCellOnChange,
+  quantityValidate
+};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C4265E27C8134096B49DFBF69369DFC6">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C88AB6CBA1694000AFF5706A31B08AE1">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const label = OB.I18N.getLabel('FundsTransfer');
+  view.theForm.getItem('description').setValue(label);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="CC73C4845CDC487395804946EACB225F">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="DF7F70B82C514F639F06495E0B818A53">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  setAmounts(view);
+  view.messageBar.hide();
+  const validation = validateAmounts(view);
+  if (validation) {
+    return validation;
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="DF7F70B82C514F639F06495E0B818A53">
+      <oldValue/>
+      <newValue><![CDATA[const CREDIT_IN_GRID = 'OBFBPS_CreditIn';
+const CREDIT_OUT_GRID = 'OBFBPS_CreditOut';
+const CREDIT_IN_AMOUNT = 'OBFBPS_CreditInAmount';
+const CREDIT_OUT_AMOUNT = 'OBFBPS_CreditOutAmount';
+const CREDIT_PEND_AMOUNT = 'OBFBPS_CreditPendAmount';
+
+const ERR_EXCEED_PENDING = 'OBFBPS_Err_CreditExceedPending';
+const ERR_NOT_EQUALS = 'OBFBPS_Err_CreditNotEquals';
+const ERR_SELECT_CREDIT = 'OBFBPS_Err_SelectCredit';
+
+const getGrid = (view, paramName) => view.theForm.getItem(paramName).canvas.viewGrid;
+
+const getSelectedAmount = grid => {
+  let amount = BigDecimal.prototype.ZERO;
+  grid.getSelectedRecords().forEach(record => {
+    const index = grid.getRecordIndex(record);
+    const editValues = grid.getEditValues(index);
+    const settlementAmount = editValues.settlementAmount
+      ? editValues.settlementAmount
+      : grid.getRecord(index).settlementAmount || 0;
+    amount = amount.add(new BigDecimal(String(settlementAmount)));
+  });
+  return Number(amount);
+};
+
+const setAmounts = view => {
+  const creditInGrid = getGrid(view, CREDIT_IN_GRID);
+  const creditOutGrid = getGrid(view, CREDIT_OUT_GRID);
+  const amountCreditIn = getSelectedAmount(creditInGrid);
+  const amountCreditOut = getSelectedAmount(creditOutGrid);
+  view.theForm.getItem(CREDIT_IN_AMOUNT).setValue(amountCreditIn);
+  view.theForm.getItem(CREDIT_OUT_AMOUNT).setValue(amountCreditOut);
+  view.theForm.getItem(CREDIT_PEND_AMOUNT).setValue(amountCreditOut - amountCreditIn);
+};
+
+const getExceedingDocumentNo = grid => {
+  let documentNo = null;
+  grid.getSelectedRecords().every(record => {
+    const index = grid.getRecordIndex(record);
+    const editValues = grid.getEditValues(index);
+    if (editValues.settlementAmount && editValues.settlementAmount > grid.getRecord(index).outstandingAmount) {
+      documentNo = grid.getRecord(index).documentNo;
+      return false;
+    }
+    return true;
+  });
+  return documentNo;
+};
+
+const validateAmounts = view => {
+  const creditInGrid = getGrid(view, CREDIT_IN_GRID);
+  const creditOutGrid = getGrid(view, CREDIT_OUT_GRID);
+  const amountCreditIn = getSelectedAmount(creditInGrid);
+  const amountCreditOut = getSelectedAmount(creditOutGrid);
+
+  const exceedIn = getExceedingDocumentNo(creditInGrid);
+  if (exceedIn) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_EXCEED_PENDING, [exceedIn]) };
+  }
+  const exceedOut = getExceedingDocumentNo(creditOutGrid);
+  if (exceedOut) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_EXCEED_PENDING, [exceedOut]) };
+  }
+  if (amountCreditIn !== amountCreditOut) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_NOT_EQUALS) };
+  }
+  if (amountCreditIn === 0) {
+    return { severity: 'error', text: OB.I18N.getLabel(ERR_SELECT_CREDIT) };
+  }
+  return null;
+};
+
+return {
+  CREDIT_IN_GRID,
+  CREDIT_OUT_GRID,
+  CREDIT_IN_AMOUNT,
+  CREDIT_OUT_AMOUNT,
+  CREDIT_PEND_AMOUNT,
+  getGrid,
+  getSelectedAmount,
+  setAmounts,
+  getExceedingDocumentNo,
+  validateAmounts,
+};]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="DF7F70B82C514F639F06495E0B818A53">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="E68790A7B65F4D45AB35E2BAE34C1F39">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const bankStatementLineId = view.callerField.record.id;
+  view.theForm.addField({
+    name: 'bankStatementLineId',
+    reference: '10'
+  });
+  view.theForm.hideItem('bankStatementLineId');
+  view.theForm
+    .getItem('ad_org_id_process')
+    .setValue(view.theForm.getItem('ad_org_id').getValue());
+  return { bankStatementLineId: bankStatementLineId };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="E68790A7B65F4D45AB35E2BAE34C1F39">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const TYPE_DEPOSIT = 'BPD';
+  const TYPE_WITHDRAWAL = 'BPW';
+  const record = view.callerField && view.callerField.record;
+
+  // Classic guard: only the Match Statement launch (record.match) gates the submit.
+  if (!record || !record.match) {
+    return undefined;
+  }
+
+  // The process-form values must be read through `view.theForm.getItem(<columnName>)`.
+  // `view.getContextInfo()` spreads `form.getValues()`, which is keyed by the parameter
+  // DISPLAY name (e.g. "Deposit Amount"), NOT the column name — so `info.depositamt`
+  // would be `undefined`. `getItem(columnName)` resolves columnName -> parameter.name
+  // and coerces Amount references to a Number (see verification note V1).
+  const form = view.theForm;
+  const toNumber = (v) => (typeof v === 'number' ? v : Number(v) || 0);
+  const blineAmt = toNumber(record.amount);
+  const trxAmt =
+    toNumber(form.getItem('depositamt').getValue()) -
+    toNumber(form.getItem('withdrawalamt').getValue());
+  const paymentId = form.getItem('fin_payment_id').getValue();
+  const glitemId = form.getItem('c_glitem_id').getValue();
+  const trxType = form.getItem('trxtype').getValue();
+
+  if (
+    (trxType === TYPE_DEPOSIT || trxType === TYPE_WITHDRAWAL) &&
+    !glitemId &&
+    !paymentId
+  ) {
+    const text = OB.I18N.getLabel('APRM_INVALID_TRANSACTION');
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, null, text);
+    return { severity: 'error', text: text };
+  }
+
+  if (trxAmt === blineAmt) {
+    return undefined;
+  }
+
+  const hideSplitConfirmation = OB.PropertyStore.get(
+    'APRM_MATCHSTATEMENT_HIDE_PARTIALMATCH_POPUP',
+    view.windowId
+  );
+  if (hideSplitConfirmation === 'Y') {
+    return undefined;
+  }
+
+  const formatAmount = (amount) =>
+    OB.Utilities.Number.JSToOBMasked(
+      amount,
+      OB.Format.defaultNumericMask,
+      OB.Format.defaultDecimalSymbol,
+      OB.Format.defaultGroupingSymbol,
+      OB.Format.defaultGroupingSize
+    );
+
+  const confirmed = await confirm(
+    OB.I18N.getLabel('APRM_SplitBankStatementLineConfirm', [
+      formatAmount(blineAmt),
+      formatAmount(trxAmt)
+    ])
+  );
+
+  if (!confirmed) {
+    return { severity: 'error', text: '' };
+  }
+  return undefined;
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="E68790A7B65F4D45AB35E2BAE34C1F39">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="0981CFAA3B244E3C8CDF439626D4B352">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const SHOW_DATES_HANDLER =
+    "com.etendoerp.financial.reports.advanced.handler.ShowDatesField";
+  const balanceFields = ["CurrentDate", "AsOfReferenceDate", "AsOfReferenceDate2", "AsOfReferenceDate3"];
+  const rangeFields = [
+    "FromRefDate",
+    "ToRefDate",
+    "DateFrom",
+    "DateTo",
+    "FromRefDate2",
+    "ToRefDate2",
+    "FromRefDate3",
+    "ToRefDate3",
+  ];
+
+  const setVisibility = (fieldNames, visible) => {
+    fieldNames.forEach((fieldName) => {
+      const field = form.getItem(fieldName);
+      if (field) {
+        if (visible) {
+          field.show();
+        } else {
+          field.hide();
+        }
+      }
+    });
+  };
+
+  const balanceValue = form.getItem("C_Acct_Rpt_ID").getValue();
+
+  const hideFields = (response, data) => {
+    if (data.balance) {
+      setVisibility(rangeFields, false);
+      setVisibility(balanceFields, true);
+    } else {
+      setVisibility(balanceFields, false);
+      setVisibility(rangeFields, true);
+    }
+  };
+
+  OB.RemoteCallManager.call(SHOW_DATES_HANDLER, { balanceValue: balanceValue }, {}, hideFields);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="0AC32C93E78E47FBA10B62CB1AE72303">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  grid.setColumnValidator('returned', orderQtyValidate);
+  grid.setColumnValidator('returnedUOM', returnedUomValidate);
+  grid.onSelectionToggle((record, state) => {
+    orderSelectionChange(grid, view, record, state);
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="0E081905DD9646A2AFB296F81C1AA62E">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  AP.updateConvertedAmount(view, form, true);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="12DDAD2FBC404963B7A49D2E54985DF9">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const TYPE_DEPOSIT = 'BPD';
+  const TYPE_WITHDRAWAL = 'BPW';
+  const value = item.getValue();
+  const depositamt = form.getItem('depositamt');
+  const withdrawalamt = form.getItem('withdrawalamt');
+
+  if (value === TYPE_WITHDRAWAL) {
+    depositamt.setDisabled(true);
+    withdrawalamt.setDisabled(false);
+    depositamt.setValue(0);
+  } else if (value === TYPE_DEPOSIT) {
+    depositamt.setDisabled(false);
+    withdrawalamt.setDisabled(true);
+    withdrawalamt.setValue(0);
+  } else {
+    depositamt.setDisabled(false);
+    withdrawalamt.setDisabled(false);
+    form.getItem('description').setValue('');
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="12F5A54CF6FA4702B147CC08BC664051">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  AP.registerGridHooks(grid, 'order_invoice', view);
+  const form = view.theForm;
+  const issotrx = form.getItem('issotrx').getValue();
+  const payment = form.getItem('fin_payment_id').getValue();
+  // Defer the settling work: at firing time the controller still holds the pre-fetch
+  // rows (rowCount=0 phantom) and the selection is not yet committed. Re-read rows AND
+  // selection INSIDE the deferral, once the delivered rows + pre-selection have landed.
+  // This mirrors classic ordInvDataArrived, which reads getSelectedRecords() after
+  // dataArrived (and defers distributeAmount via isc.Timer.setTimeout).
+  AP.afterGridSettle(grid, 'order_invoice', () => {
+    const selected = grid.getSelectedRecords ? grid.getSelectedRecords() : [];
+    if (selected.length > 0) {
+      AP.seedPreselectedOrderInvoice(form, grid, selected);
+    } else if (issotrx || !payment) {
+      AP.distributeAmount(view, form, false);
+    } else {
+      AP.updateInvOrderTotal(form, grid);
+    }
+    AP.updateActualExpected(form, view);
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="1D16F7BDCDD04F3A9AD259E84811AA41">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  AP.paymentMethodMulticurrency(view, form, true);
+  AP.checkSingleActionAvailable(form);
+  AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['c_currency_id_readonly_logic']);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="1EE24A173A464164B46519D7FDA3A667">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const CHANGE_ACCT_SCHEMA_HANDLER =
+    "com.etendoerp.financial.reports.advanced.handler.ChangeAcctSchemaActionHandler";
+  const GENERAL_LEDGER_FIELD = "GL_Journal_ID";
+
+  const organization = item.getValue() ? item.getValue() : "";
+
+  const setAcctSchema = (response, data) => {
+    const generalLedger = form.getItem(GENERAL_LEDGER_FIELD);
+    if (generalLedger) {
+      generalLedger.setValueFromRecord({
+        id: data.acctSchema,
+        _identifier: data.acctSchemaIdIdentifier,
+      });
+    }
+  };
+
+  if (organization !== "") {
+    OB.RemoteCallManager.call(
+      CHANGE_ACCT_SCHEMA_HANDLER,
+      { organization: organization },
+      {},
+      setAcctSchema
+    );
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="1FBAFF7137454F30AD8922DE75D5273F">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  AP.updateActualExpected(form, view);
+  AP.updateTotal(form);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="200C902859B746D5BDDC773D0C91C1BB">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  if (form._bslApplying) return;
+  AP.updateConvertedAmount(view, form, false);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="30801BEAD1CF413D9B2B689CBC641D12">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="3325FBE7ACEE4215B07D6C67CFF7808B">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="383A1B1C19674F23AF643521AEE759D8">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  AP.registerGridHooks(grid, 'glitem', view);
+  const form = view.theForm;
+  AP.afterGridSettle(grid, 'glitem', () => {
+    AP.updateGLItemsTotal(form, null, 0, false);
+    AP.updateActualExpected(form, view);
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="3E36DA70B20648AD84912421320F4DDE">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const ORG_FIELD = 'AD_Org_ID';
+  const ACTION_HANDLER =
+    'com.etendoerp.verifactu.action_handler.AddOrganizationInfoActionHandler';
+
+  const orgItem = form.getItem(ORG_FIELD);
+  const organization = orgItem ? orgItem.getValue() : '';
+
+  if (organization === '') {
+    return;
+  }
+
+  const callback = (response, data) => {
+    form.getItem('LegalName').setValue(data.legalName);
+    form.getItem('NIF').setValue(data.nif);
+    form.redraw();
+  };
+
+  OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="49BD36D0E5BE450989B2D2C08ABD1648">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  grid.onSelectionToggle((record, state) => {
+    grid.fireOnPause('selectionChanged' + record.id, () => {
+      relatedQuantityOnSelect(view, record, state);
+    }, 200);
+  });
+  grid.setColumnOnChange('relatedQuantity', quantityCellOnChange);
+  grid.setColumnValidator('relatedQuantity', quantityValidate);
+  updateTotalLinesAmount(view);
+  updateServicePrice(view, null, null);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="4A592FF004A8425999E67FDB5E7A8C66">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const TOTAL_ITEM = 'total count';
+  const SCALE = 2;
+  const sumSelected = () => {
+    let total = BigDecimal.prototype.ZERO;
+    const selected = grid.getSelectedRecords();
+    for (let i = 0; i < selected.length; i++) {
+      const amount = selected[i].realpayment;
+      if (amount !== undefined && amount !== null && amount !== '') {
+        total = total.add(new BigDecimal(String(amount)));
+      }
+    }
+    return total.setScale(SCALE);
+  };
+  const writeTotal = () => {
+    grid.view.theForm.getItem(TOTAL_ITEM).setValue(Number(sumSelected().toString()));
+  };
+  writeTotal();
+  grid.selectionChanged = () => writeTotal();
+  grid.onRecordChange((record, changes) => writeTotal());
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="4EDC18E376BB4EEB937AE1F1EF4EB8B1">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const FIND_PROCESS_ID = '154CB4F9274A479CB38A285E16984539';
+  const ADD_PROCESS_ID = 'E68790A7B65F4D45AB35E2BAE34C1F39';
+  const CHECK_CHANGED_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.CheckRecordChangedActionHandler';
+  const UNMATCH_TRANSACTION_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.UnMatchTransactionActionHandler';
+  const SEARCH_LABEL = 'APRM_MATCHTRANSACTION_SEARCH_BUTTON';
+  const ADD_LABEL = 'APRM_MATCHTRANSACTION_ADD_BUTTON';
+  const DELETE_LABEL = 'APRM_MATCHTRANSACTION_DELETE_BUTTON';
+
+  const showError = function(data) {
+    if (data && data.message && data.message.severity === 'error') {
+      view.messageBar.setMessage(isc.OBMessageBar.TYPE_ERROR, data.message.title, data.message.text);
+      return true;
+    }
+    return false;
+  };
+
+  const recordUpdated = function(record) {
+    const updated = new Date();
+    if (record.bslUpdated) {
+      updated.setTime(new Date(record.bslUpdated).getTime());
+    }
+    return updated;
+  };
+
+  const refreshUnmatchVisibility = function() {
+    const selection = grid.getSelectedRecords() || [];
+    let hasCleared = false;
+    for (let i = 0; i < selection.length; i++) {
+      if (selection[i] && selection[i].cleared) {
+        hasCleared = true;
+        break;
+      }
+    }
+    if (!view.unmatchButton) {
+      return;
+    }
+    if (hasCleared) {
+      view.unmatchButton.show();
+    } else {
+      view.unmatchButton.hide();
+    }
+  };
+
+  const openMatchProcess = function(record, processId, label) {
+    OB.RemoteCallManager.call(
+      CHECK_CHANGED_HANDLER,
+      { bankStatementLineId: record.id, updated: recordUpdated(record) },
+      {},
+      function(response, data) {
+        view.onRefreshFunction(view);
+        if (showError(data)) {
+          return;
+        }
+        view.openProcess({
+          paramWindow: true,
+          processId: processId,
+          windowId: view.windowId,
+          externalParams: {
+            bankStatementLineId: record.id,
+            transactionDate: record.transactionDate
+          },
+          windowTitle: OB.I18N.getLabel(label)
+        });
+      }
+    );
+  };
+
+  const clearTransaction = function(record) {
+    OB.RemoteCallManager.call(
+      UNMATCH_TRANSACTION_HANDLER,
+      { bankStatementLineId: record.id, updated: recordUpdated(record) },
+      {},
+      function(response, data) {
+        view.onRefreshFunction(view);
+        showError(data);
+      }
+    );
+  };
+
+  grid.setRowActions(function(ctx) {
+    const record = ctx.record;
+    return {
+      buttons: [
+        {
+          icon: 'search',
+          prompt: OB.I18N.getLabel(SEARCH_LABEL),
+          disabled: !!record.cleared,
+          action: function() {
+            openMatchProcess(record, FIND_PROCESS_ID, SEARCH_LABEL);
+          }
+        },
+        {
+          icon: 'add',
+          prompt: OB.I18N.getLabel(ADD_LABEL),
+          disabled: !!record.cleared,
+          action: function() {
+            openMatchProcess(record, ADD_PROCESS_ID, ADD_LABEL);
+          }
+        },
+        {
+          icon: 'clearRight',
+          prompt: OB.I18N.getLabel(DELETE_LABEL),
+          disabled: !record.cleared,
+          action: function() {
+            clearTransaction(record);
+          }
+        }
+      ]
+    };
+  });
+
+  grid.onSelectionToggle(function(record, state) {
+    refreshUnmatchVisibility();
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="4F7E3F7DEF3E41BA81566E6063AB5920">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="52D6D4EC93C44226B6F2CEC5366A709D">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="5586C0EA5C40406687AC7BF0C0E85E5B">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setAmounts(view);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="5DEFDAF5A8A2415A8181879698236A38">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const ORG_FIELD = 'AD_Org_ID';
+  const CURRENCY_FIELD = 'C_Currency_ID';
+  const ACTION_HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.AddPaymentOrganizationActionHandler';
+
+  const orgItem = form.getItem(ORG_FIELD);
+  const organization = orgItem ? orgItem.getValue() : '';
+
+  if (!organization) {
+    console.log("There is no organization");
+    console.log("organization: ", organization);
+    return;
+  }
+
+  const callback = (response, data) => {
+    console.log("response: ", response);
+    console.log("data: ", data);
+    const currencyItem = form.getItem(CURRENCY_FIELD);
+    currencyItem.setValue(data.currency);
+
+    const valueMap = currencyItem.getValueMap() || [];
+    const nextMap = valueMap.filter((option) => option.value !== data.currency);
+    nextMap.push({
+      id: data.currency,
+      value: data.currency,
+      label: data.currencyIdIdentifier,
+    });
+    currencyItem.setValueMap(nextMap);
+
+    form.redraw();
+  };
+
+  OB.RemoteCallManager.call(ACTION_HANDLER, { organization: organization }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="6B15654D49A4408DBC25E63836D02199">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const NO_VARIANTS = 'NoVariants';
+  const recordCount = grid.getData().getLength();
+  if (recordCount === 0) {
+    view.messageBar.setMessage(isc.OBMessageBar.TYPE_INFO, null, OB.I18N.getLabel(NO_VARIANTS));
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="6E03D970D07D4753941F7B06DAF197F3">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const document = AP.trxtype(form);
+  const issotrx = form.getItem('issotrx');
+  if (document === 'RCIN') {
+    issotrx.setValue(true);
+  } else {
+    issotrx.setValue(false);
+  }
+  form.getItem('fin_paymentmethod_id').setValue(null);
+  form.getItem('received_from').setValue(null);
+  if (!view.parentWindow) {
+    form.getItem('fin_financial_account_id').setValue(null);
+  }
+  AP.reloadLabels(form);
+  AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['credit_to_use_display_logic', 'actual_payment_readonly_logic']);
+  if (document !== '') {
+    AP.refetchOrderInvoiceGrid(form);
+    OB.RemoteCallManager.call(
+      'org.openbravo.advpaymentmngt.actionHandler.AddPaymentDocumentNoActionHandler',
+      { organization: form.getItem('ad_org_id').getValue(), issotrx: issotrx.getValue() },
+      {},
+      (response, data) => {
+        if (!data || data.payment_documentno === null || data.payment_documentno === undefined) {
+          return;
+        }
+        form.getItem('payment_documentno').setValue(data.payment_documentno);
+      }
+    );
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="6F1DACE3F9744318948C5A0154FAFEF2">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.AddTransactionOnChangePaymentActionHandler';
+
+  const callback = (response, data) => {
+    if (!data) {
+      return;
+    }
+    form.getItem('description').setValue(data.description);
+    form.getItem('depositamt').setValue(data.depositamt);
+    form.getItem('withdrawalamt').setValue(data.paymentamt);
+    form.getItem('c_bpartner_id').setValue(data.cBpartnerId);
+  };
+
+  OB.RemoteCallManager.call(
+    HANDLER,
+    {
+      strPaymentId: item.getValue(),
+      strDescription: form.getItem('description').getValue()
+    },
+    {},
+    callback
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="710B9D8194F84FC78966E7D2B805F9D2">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const VOID_ACTIONS = ["VO", "RC"];
+  const INVOICE_WINDOW_ID = "183";
+  const docActionField = form.getItem("DocAction");
+  const selectedRecords = view.parentWindow.view.viewGrid.getSelectedRecords();
+  const isVoidAction = VOID_ACTIONS.includes(docActionField.getValue());
+
+  if (view.windowId === INVOICE_WINDOW_ID && isVoidAction) {
+    form.getItem("VoidDate").show();
+    form.getItem("VoidAccountingDate").show();
+    if (selectedRecords.length < 2) {
+      form.getItem("POReference").show();
+    }
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="72ED21539E4541DF91D6EC779373451F">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const CHANGE_ACCT_SCHEMA_HANDLER =
+    "com.etendoerp.financial.reports.advanced.handler.ChangeAcctSchemaActionHandler";
+  const GENERAL_LEDGER_FIELD = "GL_Journal_ID";
+
+  const organization = item.getValue() ? item.getValue() : "";
+
+  const setAcctSchema = (response, data) => {
+    const generalLedger = form.getItem(GENERAL_LEDGER_FIELD);
+    if (generalLedger) {
+      generalLedger.setValueFromRecord({
+        id: data.acctSchema,
+        _identifier: data.acctSchemaIdIdentifier,
+      });
+    }
+  };
+
+  if (organization !== "") {
+    OB.RemoteCallManager.call(
+      CHANGE_ACCT_SCHEMA_HANDLER,
+      { organization: organization },
+      {},
+      setAcctSchema
+    );
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="7B2AE9099ECB4CE9B80C665D7662FA03">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  if (form.getItem('trxtype').getValue() === 'BF') {
+    form.getItem('withdrawalamt').setValue(0);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="838EF92641044D038600E4C1B6F1C4CB">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  AP.paymentMethodMulticurrency(view, form, true);
+  AP.checkSingleActionAvailable(form);
+  const trxtype = AP.trxtype(form);
+  if (trxtype !== '') {
+    AP.refetchOrderInvoiceGrid(form);
+  }
+  AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['c_currency_id_readonly_logic']);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="8DCE4BE2821E4638B318EC44A019D618">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  const ZERO = new BigDecimal('0');
+  const SCALE = 2;
+  const currencyIsoAttribute = 'currency' + OB.Constants.FIELDSEPARATOR + OB.Constants.IDENTIFIER;
+  const totals = {};
+  const selectedRecords = grid.getSelectedRecords();
+  for (let i = 0; i < selectedRecords.length; i++) {
+    const record = selectedRecords[i];
+    const currencyIso = record[currencyIsoAttribute];
+    let recordAmount = record.amount;
+    if (!record.receipt) {
+      recordAmount = -recordAmount;
+    }
+    if (!totals[currencyIso]) {
+      totals[currencyIso] = ZERO;
+    }
+    totals[currencyIso] = totals[currencyIso].add(new BigDecimal(recordAmount.toString())).setScale(SCALE);
+    if (totals[currencyIso].compareTo(ZERO) === 0) {
+      delete totals[currencyIso];
+    }
+  }
+  let total = '';
+  for (const currencyIso in totals) {
+    if (Object.prototype.hasOwnProperty.call(totals, currencyIso)) {
+      total += totals[currencyIso].toString() + ' ' + currencyIso + ' ';
+    }
+  }
+  if (!total) {
+    total = '0';
+  }
+  grid.view.theForm.getItem('total').setValue(total);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="8F67EA025A144F7D8639F972F0710056">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const orderGrid = form.getItem('orderGrid').canvas.viewGrid;
+  const newCriteria = orderGrid.addSelectedIDsToCriteria(orderGrid.getCriteria(), true);
+  newCriteria.criteria = newCriteria.criteria || [];
+  orderGrid.invalidateCache();
+  form.redraw();
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="92379AD1FF8D4456B87D87D066F7B56D">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setAmounts(view);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="94DAEE7477AF40ED9B40E3A546EACD02">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const organization = form.getItem('ad_org_id') ? form.getItem('ad_org_id').getValue() : '';
+  form.getItem('fin_paymentmethod_id').setValue(null);
+  form.getItem('received_from').setValue(null);
+  form.getItem('fin_financial_account_id').setValue(null);
+  if (organization !== '') {
+    OB.RemoteCallManager.call(
+      'org.openbravo.advpaymentmngt.actionHandler.AddPaymentOrganizationActionHandler',
+      { organization },
+      {},
+      (response, data) => {
+        if (!data || data.currency === null || data.currency === undefined) {
+          return;
+        }
+        form.getItem('c_currency_id').setValueFromRecord({ id: data.currency, _identifier: data.currencyIdIdentifier });
+        AP.refetchOrderInvoiceGrid(form);
+      }
+    );
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="97DA0EA642004F0BA82A5189A5851CF3">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const organization = form.getItem('Organization');
+  const gl = form.getItem('AccSchema');
+  OB.RemoteCallManager.call(
+    'org.openbravo.common.actionhandler.AgingGeneralLedgerByOrganizationActionHandler',
+    { organization: organization.getValue() },
+    {},
+    (response, data, request) => {
+      gl.setValueFromRecord({ id: data.response.value, _identifier: data.response.identifier });
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="98C448272CC34741818BA0403C93C78E">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="9D15FF5AF4424434B328F4B6FFC14482">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="9F106995848F42F385EBCB01526E439B">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  form.getItem('dateacct').setValue(item.getValue());
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="A801DA25DEAA404A8C651626CA31B22F">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  AP.registerGridHooks(grid, 'credit_to_use', view);
+  const form = view.theForm;
+  // Defer, then seed any backend pre-selected credit row's editable paymentAmount
+  // (classic creditOnLoadGrid does not seed; selectionChangedCredit does, but never
+  // fires for rows delivered already selected by the datasource → new-#8).
+  AP.afterGridSettle(grid, 'credit_to_use', () => {
+    const selected = grid.getSelectedRecords ? grid.getSelectedRecords() : [];
+    AP.seedPreselectedCredit(form, grid, selected);
+    AP.updateCreditTotal(form);
+    AP.updateActualExpected(form, view);
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="A95732C0B3794D79B2E945D50872D931">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  form._mcActualTouched = true;
+  const issotrx = form.getItem('issotrx').getValue();
+  if (issotrx) {
+    AP.distributeAmount(view, form, true);
+    AP.updateConvertedAmount(view, form, false);
+  }
+  if (form._pendingRecalcRateFromBSL) {
+    const act = bd(form.getItem('actual_payment').getValue() || 0);
+    if (act.compareTo(ZERO()) > 0) {
+      form._bslApplying = true;
+      AP.updateConvertedAmount(null, form, true);
+      form._bslApplying = false;
+      form._pendingRecalcRateFromBSL = false;
+    }
+  }
+  AP.applyBankAmountToConverted(form);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="AC203DDD5CF1459AA36DC7769ED15567">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  if (form.getItem('trxtype').getValue() === 'BF') {
+    form.getItem('depositamt').setValue(0);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="C511B1965C2A46C2BD8144DB918CD17B">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  form.getItem('ad_org_id_process').setValue(form.getItem('ad_org_id').getValue());
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="D18581DE288A4E3891A8F047355D1CE5">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  grid.onSelectionToggle((record, state) => {
+    orderSelectionChange(grid, view, record, state);
+  });
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="D6991F7834DD4073AC4E5F72A8A5065D">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const organization = form.getItem('Organization');
+  const gl = form.getItem('AccSchema');
+  OB.RemoteCallManager.call(
+    'org.openbravo.common.actionhandler.AgingGeneralLedgerByOrganizationActionHandler',
+    { organization: organization.getValue() },
+    {},
+    (response, data, request) => {
+      gl.setValueFromRecord({ id: data.response.value, _identifier: data.response.identifier });
+    }
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="DDCA2212D7AF4EE4AD51B1E968CB95F5">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const PURCHASE_INVOICE_WINDOW_ID = '183';
+  const VOID = 'VO';
+  const REVERSE_CORRECT = 'RC';
+  const docActionField = form.getItem('DocAction');
+  const docAction = docActionField.getValue();
+  const selectedRecords = (view.getSelection && view.getSelection()) || [];
+  const isVoidLikeAction = docAction === VOID || docAction === REVERSE_CORRECT;
+
+  if (view.windowId === PURCHASE_INVOICE_WINDOW_ID && isVoidLikeAction) {
+    form.getItem('VoidDate').show();
+    form.getItem('VoidAccountingDate').show();
+    if (selectedRecords.length < 2) {
+      form.getItem('POReference').show();
+    }
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="DEC3B66EB67A401B95B394EEC6D09A82">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="E2FB4840B65A44D4B3090A7E3C95FD95">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  AP.paymentMethodMulticurrency(view, form, true);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="E3019D02BA14437A9BE0948000062776">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.GLItemTransactionActionHandler';
+
+  const callback = (response, data) => {
+    if (!data) {
+      return;
+    }
+    form.getItem('description').setValue(data.description);
+  };
+
+  OB.RemoteCallManager.call(
+    HANDLER,
+    {
+      strGLItemId: item.getValue(),
+      strDescription: form.getItem('description').getValue()
+    },
+    {},
+    callback
+  );
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="E41862369EA645AF9952BCE0FD5AEFE0">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setLastView(view);
+  setAmounts(view);
+  grid.onSelectionToggle(recomputeAmounts);
+  grid.setColumnOnChange(SETTLEMENT_AMOUNT, onSettlementAmountChange);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="E5808EFB574A4416BEB04EBBB0F2C9E8">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  try {
+    const rows = grid.data.allRows;
+    rows.forEach((row, index) => {
+      const total = sumAccountAmount(row.id);
+      if (total !== null) {
+        grid.setEditValue(index, AMOUNT_COLUMN, total);
+      }
+    });
+  } catch (error) {
+    console.error('Error during matching:', error);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="E91BA4DAF60B44F38D28FFFDD18F0C33">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  AP.updateActualExpected(form, view);
+  AP.updateTotal(form);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="EA236C2D265845E6A3E2AE5A5A7A7AB2">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const trxtype = AP.trxtype(form);
+  if (trxtype !== '') {
+    AP.paymentMethodMulticurrency(view, form, true);
+    AP.refetchOrderInvoiceGrid(form);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="EB23EC23944345D2BA7A10320703212C">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const DIMENSION_FIELDS = [
+    "FromAccount",
+    "ToAccount",
+    "BusinessPartner",
+    "product",
+    "c_project",
+    "groupBy",
+    "includeZeroFigures",
+  ];
+  const SUMMARY_LEVEL = "S";
+
+  const setVisibility = (fieldNames, visible) => {
+    fieldNames.forEach((fieldName) => {
+      const field = form.getItem(fieldName);
+      if (field) {
+        if (visible) {
+          field.show();
+        } else {
+          field.hide();
+        }
+      }
+    });
+  };
+
+  const accountLevelItem = form.getItem("AccountLevel");
+  const accountLevel = accountLevelItem ? accountLevelItem.getValue() : null;
+
+  setVisibility(DIMENSION_FIELDS, accountLevel === SUMMARY_LEVEL);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="EB46162236C04DC2812C7095A88FA708">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const trxtype = AP.trxtype(form);
+  const receivedFrom = form.getItem('received_from').getValue();
+  const isSOTrx = form.getItem('issotrx').getValue();
+  const financialAccount = form.getItem('fin_financial_account_id').getValue();
+  const creditToUseGrid = form.getItem('credit_to_use');
+  const creditGrid = creditToUseGrid && creditToUseGrid.canvas ? creditToUseGrid.canvas.viewGrid : null;
+
+  if (creditGrid && creditGrid.getSelectedRecords().length > 0) {
+    creditGrid.deselectAllRecords();
+  }
+  AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['credit_to_use_display_logic']);
+
+  if (trxtype !== '') {
+    OB.RemoteCallManager.call(
+      'org.openbravo.advpaymentmngt.actionHandler.ReceivedFromPaymentMethodActionHandler',
+      { receivedFrom, isSOTrx, financialAccount },
+      {},
+      (response, data) => {
+        if (!data || data.paymentMethodId === null || data.paymentMethodId === undefined) {
+          return;
+        }
+        if (data.paymentMethodId !== '') {
+          const paymentMethodItem = form.getItem('fin_paymentmethod_id');
+          paymentMethodItem.setValueFromRecord({ id: data.paymentMethodId, _identifier: data.paymentMethodName });
+          AP.paymentMethodMulticurrency(view, form, true);
+          AP.checkSingleActionAvailable(form);
+          AP.refetchOrderInvoiceGrid(form);
+          AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['c_currency_id_readonly_logic']);
+        }
+      }
+    );
+    AP.refetchOrderInvoiceGrid(form);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="ECBF663096194274B4FBBAAC1C146D45">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const RECEIVED_IN = "Received In";
+  const PAID_OUT = "Paid Out";
+
+  const itemName = item.name;
+  const itemValue = item.getValue();
+
+  if (itemName === RECEIVED_IN) {
+    form.getItem(PAID_OUT).setValue(!itemValue);
+  }
+
+  if (itemName === PAID_OUT) {
+    form.getItem(RECEIVED_IN).setValue(!itemValue);
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="F4029E7726074FF2B6D3B59AE3072711">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const HANDLER =
+    'org.openbravo.advpaymentmngt.actionHandler.FundsTransferOnChangeDepositToActionHandler';
+
+  const callback = (response, data) => {
+    if (!data || !data.currencyID) {
+      return;
+    }
+    const currencyTo = form.getItem('c_currency_to_id');
+    currencyTo.setValueFromRecord({
+      id: data.currencyID,
+      _identifier: data.currencyISO
+    });
+    form.redraw();
+  };
+
+  OB.RemoteCallManager.call(HANDLER, { accountID: item.getValue() }, {}, callback);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="F70E0FF6BDA949E08BF1BA10DDD3407C">
+      <oldValue/>
+      <newValue><![CDATA[(grid, view, parameters) => {
+  setLastView(view);
+  setAmounts(view);
+  grid.onSelectionToggle(recomputeAmounts);
+  grid.setColumnOnChange(SETTLEMENT_AMOUNT, onSettlementAmountChange);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FA3B7681559342D392EDCB96C9A38552">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form) => {
+  const DOCUMENT_NO_FIELD = "DocumentNo";
+  const SHOW_DOCUMENT_NO_FIELD = "showDocumentNo";
+  const DOCUMENT_TYPES_WITHOUT_DOC_NO = [
+    "361",
+    "304",
+    "305",
+    "362",
+    "306",
+    "307",
+    "8D951A5E22934A819342B97E5755D063",
+    "12CD29ED0686428DACEF24B5040A8EA5",
+    "21C51C14E7E14F05AE98A0DCFF569C66",
+    "8E2E3976B54A46D58752619DDA78E35E",
+    "302",
+    "257F25CAB32A4009AA45EFCE2ADE5F1C",
+    "88BE65DDD6064F25A1837009F7375210",
+  ];
+
+  const selectedTypes = item.getValue();
+  const documentNo = form.getItem(DOCUMENT_NO_FIELD);
+  const showDocumentNo = form.getItem(SHOW_DOCUMENT_NO_FIELD);
+
+  const getSelectedValue = (values) =>
+    values && typeof values.get === "function" ? values.get(0) : values && values[0];
+
+  const isSingleSupportedType =
+    selectedTypes &&
+    selectedTypes.length === 1 &&
+    DOCUMENT_TYPES_WITHOUT_DOC_NO.includes(getSelectedValue(selectedTypes));
+
+  if (isSingleSupportedType) {
+    showDocumentNo.setValue(false);
+    documentNo.setDisabled(false);
+  } else {
+    showDocumentNo.setValue(true);
+    documentNo.setDisabled(true);
+    documentNo.clearValue();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FB975E5F2AE3405197173B0DFB172ECC">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  if (item.getValue() === item.oldSelectedValue) {
+    return;
+  }
+  item.oldSelectedValue = item.getValue();
+  AP.refetchOrderInvoiceGrid(form);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FBFD6C5F59754807B93171ABA9EC6A58">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const RECIPIENT_FIELD = 'recipient_id';
+  const recipientItem = form.getItem(RECIPIENT_FIELD);
+  const recipientID = recipientItem ? recipientItem.getValue() : '';
+
+  if (recipientID === '') {
+    return;
+  }
+
+  const severity = OB.MessageBar.TYPE_WARNING;
+  const message = OB.I18N.getLabel('ETVFAC_DATA_ID_ISEMPTY');
+  view.messageBar.setMessage(severity, severity.toUpperCase(), message);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FC9ABA9B85B04AF492CF3A17D84190DA">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const column1 = form.getItem('Column1').getValue();
+  const column2 = form.getItem('Column2').getValue();
+  const column3 = form.getItem('Column3').getValue();
+  const column4 = form.getItem('Column4').getValue();
+  const allSet = column1 && column2 && column3 && column4;
+  const ascending = column1 < column2 && column2 < column3 && column3 < column4;
+  if (allSet && !ascending) {
+    item.setValue('');
+    view.messageBar.setMessage(
+      isc.OBMessageBar.TYPE_WARNING,
+      null,
+      OB.I18N.getLabel('OBUIAPP_OverdueNotValid')
+    );
+  } else {
+    view.messageBar.hide();
+  }
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="FDB7781154A242D38AEB59DCF265F3A3">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const RECEIVED_IN = "Received In";
+  const PAID_OUT = "Paid Out";
+
+  const itemName = item.name;
+  const itemValue = item.getValue();
+
+  if (itemName === RECEIVED_IN) {
+    form.getItem(PAID_OUT).setValue(!itemValue);
+  }
+
+  if (itemName === PAID_OUT) {
+    form.getItem(RECEIVED_IN).setValue(!itemValue);
+  }
+}]]></newValue>
     </columnDataChange>
   </vector>
