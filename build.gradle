@@ -7,10 +7,10 @@
 */
 
 group          = "com.etendoerp"
-version        = "1.0.1"
+version        = "1.0.1-SNAPSHOT"
 description    = "UI template foundation module that provides reusable components, layouts, and configuration templates for the new Etendo interface ecosystem."
 ext.artifact   = "metadata.template"
-ext.repository = "https://maven.pkg.github.com/etendosoftware/com.etendoerp.platform.extensions"
+ext.repository = "https://repo.futit.cloud/repository/maven-snapshots"
 
 configurations {
     moduleDependencyContainer
@@ -27,15 +27,19 @@ publishing {
     }
     repositories {
         maven {
-            url = "https://maven.pkg.github.com/etendosoftware/com.etendoerp.platform.extensions"
-        }
+            url "https://repo.futit.cloud/repository/maven-snapshots"
+            credentials {
+                username = project.findProperty("nexusUser") ?: System.getProperty("nexusUser") ?: System.getenv("NEXUS_USR") ?: ""
+                password = project.findProperty("nexusPassword") ?: System.getProperty("nexusPassword") ?: System.getenv("NEXUS_PSW") ?: ""
+            }
+}
     }
 }
 
 repositories {
     mavenCentral()
     maven {
-        url = "https://maven.pkg.github.com/etendosoftware/com.etendoerp.platform.extensions"
+        url = "https://repo.futit.cloud/repository/maven-snapshots"
     }
     maven {
         url = "https://repo.futit.cloud/repository/maven-releases"
