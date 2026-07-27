@@ -1523,7 +1523,12 @@ AP.doSelectionChanged = (record, state, view) => {
   const credit = bd(form.getItem('used_credit').getValue() || 0);
   const bslamount = bd(form.getItem('bslamount').getValue() || 0);
 
-  amount = amount.subtract(distributedAmount).subtract(glitem).add(credit);
+  // Exclude this row's own already-distributed amount from the pool so a re-fire of
+  // selectionChanged on an already-assigned row stays idempotent (otherwise the row's
+  // own amount, folded into amount_inv_ords, is subtracted from its own pool and the row
+  // collapses to the leftover/overpayment).
+  const ownCurrent = bd(orderInvoice.getEditedCell(record, 'amount') || 0);
+  amount = amount.subtract(distributedAmount.subtract(ownCurrent)).subtract(glitem).add(credit);
 
   if (issotrx) {
     if (amount.signum() !== 0 && state) {
