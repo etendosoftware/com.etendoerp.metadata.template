@@ -261,10 +261,6 @@
       <oldValue/>
       <newValue><![CDATA[PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMCA2SDE3VjVDMTcgNC4yIDE2LjY4IDMuNDQgMTYuMTIgMi44OEMxNS41NiAyLjMyIDE0Ljc5IDIgMTQgMkgxMEM5LjIgMiA4LjQ0IDIuMzIgNy44OCAyLjg4QzcuMzIgMy40NCA3IDQuMjEgNyA1VjZINEMyLjM0IDYgMSA3LjM0IDEgOVYxOUMxIDIwLjY2IDIuMzQgMjIgNCAyMkgyMEMyMS42NiAyMiAyMyAyMC42NiAyMyAxOVY5QzIzIDcuMzQgMjEuNjYgNiAyMCA2Wk05IDVDOSA0LjczIDkuMTEgNC40OCA5LjI5IDQuMjlDOS40NyA0LjEgOS43MyA0IDEwIDRIMTRDMTQuMjcgNCAxNC41MiA0LjExIDE0LjcxIDQuMjlDMTQuOSA0LjQ4IDE1IDQuNzMgMTUgNVY2SDlWNVpNMTUgOFYyMEg5VjhIMTVaTTMgMTlWOUMzIDguNDUgMy40NSA4IDQgOEg3VjIwSDRDMy40NSAyMCAzIDE5LjU1IDMgMTlaTTIxIDE5QzIxIDE5LjU1IDIwLjU1IDIwIDIwIDIwSDE3VjhIMjBDMjAuNTUgOCAyMSA4LjQ1IDIxIDlWMTlaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K]]></newValue>
     </columnDataChange>
-    <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="5B13FC397F814D188EF8A2479511FED3">
-      <oldValue/>
-      <newValue><![CDATA[PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMi43NzUyIDIuNzUwNzFDMTMuOTA2OSAxLjY1Nzc2IDE1LjQyMjUgMS4wNTI5OSAxNi45OTU3IDEuMDY2NjZDMTguNTY4OCAxLjA4MDMzIDIwLjA3MzcgMS43MTEzNSAyMS4xODYyIDIuODIzOEMyMi4yOTg2IDMuOTM2MjQgMjIuOTI5NiA1LjQ0MTEyIDIyLjk0MzMgNy4wMTQzQzIyLjk1NyA4LjU4NzQ4IDIyLjM1MjIgMTAuMTAzMSAyMS4yNTkyIDExLjIzNDdMMjEuMjQ3MSAxMS4yNDcxTDE4LjI0NzIgMTQuMjQ3QzE3LjYzODkgMTQuODU1NSAxNi45MDY5IDE1LjMyNiAxNi4xMDA4IDE1LjYyNjdDMTUuMjk0NyAxNS45Mjc0IDE0LjQzMzMgMTYuMDUxMiAxMy41NzUyIDE1Ljk4OThDMTIuNzE3IDE1LjkyODMgMTEuODgyMSAxNS42ODMgMTEuMTI3MSAxNS4yNzA1QzEwLjM3MiAxNC44NTggOS43MTQ1MyAxNC4yODc5IDkuMTk5MTkgMTMuNTk5QzguODY4MzggMTMuMTU2NyA4Ljk1ODczIDEyLjUzIDkuNDAwOTggMTIuMTk5MkM5Ljg0MzIzIDExLjg2ODQgMTAuNDY5OSAxMS45NTg4IDEwLjgwMDcgMTIuNDAxQzExLjE0NDMgMTIuODYwMyAxMS41ODI2IDEzLjI0MDQgMTIuMDg2IDEzLjUxNTRDMTIuNTg5MyAxMy43OTA0IDEzLjE0NTkgMTMuOTUzOSAxMy43MTggMTMuOTk0OUMxNC4yOTAyIDE0LjAzNTkgMTQuODY0NCAxMy45NTMzIDE1LjQwMTggMTMuNzUyOEMxNS45MzkyIDEzLjU1MjQgMTYuNDI3MiAxMy4yMzg3IDE2LjgzMjcgMTIuODMzTDE5LjgyNjQgOS44MzkzN0MyMC41NTE0IDkuMDg1NiAyMC45NTI1IDguMDc3NzMgMjAuOTQzNCA3LjAzMTY4QzIwLjkzNDIgNS45ODI4OSAyMC41MTM2IDQuOTc5NjQgMTkuNzcxOSA0LjIzODAxQzE5LjAzMDMgMy40OTYzOCAxOC4wMjcxIDMuMDc1NyAxNi45NzgzIDMuMDY2NTlDMTUuOTMxOCAzLjA1NzQ5IDE0LjkyMzUgMy40NTg5IDE0LjE2OTYgNC4xODQ1M0wxMi40NTUgNS44ODkxNkMxMi4wNjMzIDYuMjc4NTUgMTEuNDMwMiA2LjI3NjcgMTEuMDQwOCA1Ljg4NTA0QzEwLjY1MTQgNS40OTMzOCAxMC42NTMzIDQuODYwMjEgMTEuMDQ0OSA0LjQ3MDgzTDEyLjc2NDkgMi43NjA4M0wxMi43NzUyIDIuNzUwNzFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTcuODk5MTEgOC4zNzMyOEM4LjcwNTIyIDguMDcyNTggOS41NjY1NyA3Ljk0ODc2IDEwLjQyNDcgOC4wMTAyMkMxMS4yODI5IDguMDcxNjggMTIuMTE3OCA4LjMxNjk4IDEyLjg3MjkgOC43Mjk0OUMxMy42Mjc5IDkuMTQyIDE0LjI4NTQgOS43MTIwNiAxNC44MDA3IDEwLjQwMUMxNS4xMzE1IDEwLjg0MzMgMTUuMDQxMiAxMS40NyAxNC41OTg5IDExLjgwMDhDMTQuMTU2NyAxMi4xMzE2IDEzLjUzIDEyLjA0MTIgMTMuMTk5MiAxMS41OTlDMTIuODU1NiAxMS4xMzk3IDEyLjQxNzMgMTAuNzU5NiAxMS45MTM5IDEwLjQ4NDZDMTEuNDEwNiAxMC4yMDk2IDEwLjg1NCAxMC4wNDYxIDEwLjI4MTkgMTAuMDA1MUM5LjcwOTc2IDkuOTY0MTMgOS4xMzU1MiAxMC4wNDY3IDguNTk4MTEgMTAuMjQ3MUM4LjA2MDcxIDEwLjQ0NzYgNy41NzI3IDEwLjc2MTMgNy4xNjcxOSAxMS4xNjdMNC4xNzM1NSAxNC4xNjA2QzMuNDQ4NTEgMTQuOTE0NCAzLjA0NzQ2IDE1LjkyMjMgMy4wNTY1NSAxNi45NjgzQzMuMDY1NjYgMTguMDE3MSAzLjQ4NjM0IDE5LjAyMDMgNC4yMjc5NyAxOS43NjJDNC45Njk2IDIwLjUwMzYgNS45NzI4NSAyMC45MjQzIDcuMDIxNjQgMjAuOTMzNEM4LjA2NzY4IDIwLjk0MjUgOS4wNzU1NSAyMC41NDE0IDkuODI5MzIgMTkuODE2NEwxMS41MzI4IDE4LjExMjlDMTEuOTIzNCAxNy43MjI0IDEyLjU1NjUgMTcuNzIyNCAxMi45NDcxIDE4LjExMjlDMTMuMzM3NiAxOC41MDM0IDEzLjMzNzYgMTkuMTM2NiAxMi45NDcxIDE5LjUyNzFMMTEuMjM3MSAyMS4yMzcxTDExLjIyNDcgMjEuMjQ5M0MxMC4wOTMxIDIyLjM0MjIgOC41Nzc0NCAyMi45NDcgNy4wMDQyNiAyMi45MzMzQzUuNDMxMDggMjIuOTE5NyAzLjkyNjIgMjIuMjg4NiAyLjgxMzc2IDIxLjE3NjJDMS43MDEzMSAyMC4wNjM3IDEuMDcwMjkgMTguNTU4OSAxLjA1NjYyIDE2Ljk4NTdDMS4wNDI5NSAxNS40MTI1IDEuNjQ3NzIgMTMuODk2OSAyLjc0MDY3IDEyLjc2NTNMMi43NTI4NSAxMi43NTI5TDUuNzUyNzIgOS43NTMwMkM1Ljc1MjY4IDkuNzUzMDYgNS43NTI3NiA5Ljc1Mjk3IDUuNzUyNzIgOS43NTMwMkM2LjM2MDk2IDkuMTQ0NiA3LjA5MzA1IDguNjczOTYgNy44OTkxMSA4LjM3MzI4WiIgZmlsbD0iYmxhY2siLz4KPC9zdmc+Cg==]]></newValue>
-    </columnDataChange>
     <columnDataChange tablename="AD_MENU" columnname="EM_ETMETA_ICON" pkRow="5D501B7F2ED84F1ABCA21CF9D0409C4A">
       <oldValue/>
       <newValue><![CDATA[PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMC45MiA4LjYxMDAxQzIwLjg3IDguNDkwMDEgMjAuOCA4LjM4MDAxIDIwLjcgOC4yOTAwMUwxMy43MSAxLjI5MDAxQzEzLjYyIDEuMjAwMDEgMTMuNTEgMS4xMzAwMSAxMy4zOSAxLjA3MDAxQzEzLjI3IDEuMDIwMDEgMTMuMTQgMC45OTAwMDUgMTMgMC45OTAwMDVINkM1LjIgMC45OTAwMDUgNC40NCAxLjMxMDAxIDMuODggMS44NzAwMUMzLjMyIDIuNDMwMDEgMyAzLjIwMDAxIDMgMy45OTAwMVYxOS45OUMzIDIwLjc5IDMuMzIgMjEuNTUgMy44OCAyMi4xMUM0LjQ0IDIyLjY3IDUuMjEgMjIuOTkgNiAyMi45OUgxOEMxOC44IDIyLjk5IDE5LjU2IDIyLjY3IDIwLjEyIDIyLjExQzIwLjY4IDIxLjU1IDIxIDIwLjc4IDIxIDE5Ljk5VjguOTkwMDFDMjEgOC44NjAwMSAyMC45NyA4LjczMDAxIDIwLjkyIDguNjAwMDFWOC42MTAwMVpNMTQgNC40MTAwMUwxNy41OSA4LjAwMDAxSDE0VjQuNDEwMDFaTTE4LjcxIDIwLjcxQzE4LjUyIDIwLjkgMTguMjcgMjEgMTggMjFINkM1LjczIDIxIDUuNDggMjAuODkgNS4yOSAyMC43MUM1LjEgMjAuNTIgNSAyMC4yNyA1IDIwVjQuMDAwMDFDNSAzLjczMDAxIDUuMTEgMy40ODAwMSA1LjI5IDMuMjkwMDFDNS40NyAzLjEwMDAxIDUuNzMgMy4wMDAwMSA2IDMuMDAwMDFIMTJWOS4wMDAwMUMxMiA5LjU1MDAxIDEyLjQ1IDEwIDEzIDEwSDE5VjIwQzE5IDIwLjI3IDE4Ljg5IDIwLjUyIDE4LjcxIDIwLjcxWiIgZmlsbD0iYmxhY2siLz4KPC9zdmc+Cg==]]></newValue>
@@ -483,6 +479,51 @@ return { ACCOUNTS_PARAM, AMOUNT_PARAM, AMOUNT_COLUMN, state, sumAccountAmount };
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="2ECF46DAAEEB486EAF79D3594D50DE5F">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="2ECF46DAAEEB486EAF79D3594D50DE5F">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const records = view.hookData.selectedRecords ?? [];
+  if (records.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runSiiAction(records);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="2ECF46DAAEEB486EAF79D3594D50DE5F">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Shared helper mirroring the classic OB.AEATSII.execute (ModDefinicionProceso.js:14):
+// one remote call, the server's own severity/title/text in the banner, then a grid
+// refresh. Cloned per process because payscript module scope is per-process.
+const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiEnvioFactura";
+const WARNING_LABEL = "AEATSII_WARNING_SEND";
+const TITLE_LABEL = "AEATSII_TITLE_SEND";
+
+const runSiiAction = async (records) => {
+  const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  // Classic closes the popup and runs nothing when the user declines.
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    ids: records.map((record) => record.id),
+    orgid: records[0].organization,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runSiiAction };]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -583,6 +624,55 @@ return {};]]></newValue>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="71E00A0E964E43AE81C5AFBCDCA5F87C">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="73B931766AFE4D50A9FD25CB4547D197">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="73B931766AFE4D50A9FD25CB4547D197">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const records = view.hookData.selectedRecords ?? [];
+  if (records.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runSiiAction(records);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="73B931766AFE4D50A9FD25CB4547D197">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Shared helper mirroring the classic OB.AEATSII.execute (ModDefinicionProceso.js:14):
+// one remote call, the server's own severity/title/text in the banner, then a grid
+// refresh. Cloned per process because payscript module scope is per-process.
+const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiCashReceiptSending";
+const WARNING_LABEL = "AEATSII_WARNING_SEND";
+const TITLE_LABEL = "AEATSII_TITLE_SEND";
+
+const runSiiAction = async (records) => {
+  const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  // Classic closes the popup and runs nothing when the user declines.
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    ids: records.map((record) => record.id),
+    orgid: records[0].organization,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="73B931766AFE4D50A9FD25CB4547D197">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
@@ -763,6 +853,51 @@ return {};]]></newValue>
 
   return data;
 }]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="92C02F9A367140C085D1EE3BD27C4E96">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="92C02F9A367140C085D1EE3BD27C4E96">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const records = view.hookData.selectedRecords ?? [];
+  if (records.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runSiiAction(records);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="92C02F9A367140C085D1EE3BD27C4E96">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Shared helper mirroring the classic OB.AEATSII.execute (ModDefinicionProceso.js:14):
+// one remote call, the server's own severity/title/text in the banner, then a grid
+// refresh. Cloned per process because payscript module scope is per-process.
+const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiCorrectDuplicateInvoiceError";
+const WARNING_LABEL = "AEATSII_WARNING_CORRECT";
+const TITLE_LABEL = "AEATSII_TITLE_SEND";
+
+const runSiiAction = async (records) => {
+  const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  // Classic closes the popup and runs nothing when the user declines.
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    ids: records.map((record) => record.id),
+    orgid: records[0].organization,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runSiiAction };]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="99E532BA0306450A839F5DE238375238">
       <oldValue><![CDATA[async (_processDefinition, { selectedRecords, parentRecord }) => {
@@ -1860,6 +1995,51 @@ return {
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="9FF06EA1E74845B8B74FBC36AAE40F94">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="9FF06EA1E74845B8B74FBC36AAE40F94">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const records = view.hookData.selectedRecords ?? [];
+  if (records.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runSiiAction(records);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="9FF06EA1E74845B8B74FBC36AAE40F94">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Shared helper mirroring the classic OB.AEATSII.execute (ModDefinicionProceso.js:14):
+// one remote call, the server's own severity/title/text in the banner, then a grid
+// refresh. Cloned per process because payscript module scope is per-process.
+const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiCashReceiptSIIModification";
+const WARNING_LABEL = "AEATSII_WARNING_SEND";
+const TITLE_LABEL = "AEATSII_TITLE_SEND";
+
+const runSiiAction = async (records) => {
+  const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  // Classic closes the popup and runs nothing when the user declines.
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    ids: records.map((record) => record.id),
+    orgid: records[0].organization,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runSiiAction };]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="A2C19D0EF6594D14A64BC62E99A89CC3">
       <oldValue/>
       <newValue><![CDATA[const UOM_MANAGEMENT = 'UomManagement';
@@ -2015,6 +2195,14 @@ return {
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="A4008FA053C34DF0ACB814F04948E205">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="A4008FA053C34DF0ACB814F04948E205">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="A5A9B914DEAF4C16B028C9D8A4F39A6F">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -2074,6 +2262,85 @@ return {
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="A5A9B914DEAF4C16B028C9D8A4F39A6F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="A832A5DA28FB4BB391BDE883E928DFC5">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="A832A5DA28FB4BB391BDE883E928DFC5">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const recordIds = view.hookData.recordIds ?? [];
+  if (recordIds.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runOpenClose(recordIds);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="A832A5DA28FB4BB391BDE883E928DFC5">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Mirrors OB.OpenClose.execute + isc.OpenClosePeriodProcessPopup
+// (periodControlStatus.js:95 and :130): fetch the action combo, ask the user,
+// post the choice, report, refresh.
+const ACTION_HANDLER = "org.openbravo.client.application.event.OpenClosePeriodHandler";
+const ACTION_FIELD = "action";
+
+// SmartClient value maps are { value: label } objects; a LIST field takes
+// [{ value, label }]. Tolerates the array form in case the handler changes.
+const toRefList = (valueMap) => {
+  if (Array.isArray(valueMap)) return valueMap;
+  return Object.entries(valueMap ?? {}).map(([value, label]) => ({ value, label: String(label) }));
+};
+
+const runOpenClose = async (recordIds) => {
+  const combo = await callAction(ACTION_HANDLER, { recordIdList: recordIds, action: "ACTION_COMBO" });
+  const data = combo?.data;
+  if (!data) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_ErrorInProcess"), msgType: "error" } };
+  }
+
+  const refList = toRefList(data.actionComboBox?.valueMap);
+  // Classic sets defaultToFirstOption on the field, so an absent default still
+  // arrives at the dialog preselected.
+  const defaultValue = data.actionComboBox?.defaultValue ?? refList[0]?.value;
+
+  const collected = await openDynamicForm({
+    title: "Process Request",
+    fields: [
+      {
+        name: ACTION_FIELD,
+        inputType: "LIST",
+        refList,
+        defaultValue,
+      },
+    ],
+  });
+  // Cancel: classic closes the popup and posts nothing.
+  if (!collected) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    closePeriodStepId: data.nextStepId,
+    recordIdList: recordIds,
+    action: collected[0]?.value,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runOpenClose };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="A832A5DA28FB4BB391BDE883E928DFC5">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="A832A5DA28FB4BB391BDE883E928DFC5">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
@@ -2152,6 +2419,120 @@ return {
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="B5C942145F354ABEBC9F16235D80D776">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="B6F5DE7C02A64E3DB6E770AF56E299E2">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="B6F5DE7C02A64E3DB6E770AF56E299E2">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="BAAECFDF9FF144E8A610E9F1EF3E5FBE">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="BAAECFDF9FF144E8A610E9F1EF3E5FBE">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const records = view.hookData.selectedRecords ?? [];
+  if (records.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runSiiAction(records);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="BAAECFDF9FF144E8A610E9F1EF3E5FBE">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Shared helper mirroring the classic OB.AEATSII.execute (ModDefinicionProceso.js:14):
+// one remote call, the server's own severity/title/text in the banner, then a grid
+// refresh. Cloned per process because payscript module scope is per-process.
+const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiInvoiceSIIModification";
+const WARNING_LABEL = "AEATSII_WARNING_SEND";
+const TITLE_LABEL = "AEATSII_TITLE_SEND";
+
+const runSiiAction = async (records) => {
+  const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  // Classic closes the popup and runs nothing when the user declines.
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    ids: records.map((record) => record.id),
+    orgid: records[0].organization,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="BAAECFDF9FF144E8A610E9F1EF3E5FBE">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="BAAECFDF9FF144E8A610E9F1EF3E5FBE">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="BE564945CB2D4892AC0EE51204C5DB7D">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="BE564945CB2D4892AC0EE51204C5DB7D">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const records = view.hookData.selectedRecords ?? [];
+  if (records.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runSiiAction(records);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="BE564945CB2D4892AC0EE51204C5DB7D">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Shared helper mirroring the classic OB.AEATSII.execute (ModDefinicionProceso.js:14):
+// one remote call, the server's own severity/title/text in the banner, then a grid
+// refresh. Cloned per process because payscript module scope is per-process.
+const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiUnsubscribeInvoice";
+const WARNING_LABEL = "AEATSII_WARNING_UNSUBSCRIBE";
+const TITLE_LABEL = "AEATSII_TITLE_SEND";
+
+const runSiiAction = async (records) => {
+  const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  // Classic closes the popup and runs nothing when the user declines.
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    ids: records.map((record) => record.id),
+    orgid: records[0].organization,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="BE564945CB2D4892AC0EE51204C5DB7D">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="BE564945CB2D4892AC0EE51204C5DB7D">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
@@ -2317,6 +2698,54 @@ return {
 };]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C4265E27C8134096B49DFBF69369DFC6">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="C580B3B60DA5484387493A74CEB00D13">
+      <oldValue><![CDATA[async (processDefinition, payload) => {
+
+  const result = await callAction("com.etendoerp.psd2.bank.integration.actionhandler.GetConsents",
+    { _topLevel: true, id: payload.recordIds[0] }
+  );
+
+  if (result?.message?.severity === "error") {
+    throw new Error(result.message.text || "GetConsents failed");
+  }
+
+  return {
+    type: "openUrl",
+    url: result.consentUrl,
+    refreshRecord: true,
+    closeModal: true,
+    windowFeatures: `width=${Math.round(screen.width * 0.7)},height=${Math.round(screen.height * 0.7)},left=${Math.round(screen.width * 0.15)},top=${Math.round(screen.height * 0.15)}`
+  };
+}]]></oldValue>
+      <newValue><![CDATA[async (processDefinition, payload) => {
+  // callAction exposes the body nested (`.data`) and spread; accept either form.
+  const response = await callAction("com.etendoerp.psd2.bank.integration.actionhandler.GetConsents",
+    { _topLevel: true, id: payload.recordIds[0] }
+  );
+  const result = response?.data ?? response;
+
+  // Classic: handleMessage(data.message.title, data.message.text, TYPE_ERROR).
+  // Returning the message (rather than throwing) keeps its severity and title.
+  if (result?.message?.severity === "error") {
+    return { message: result.message };
+  }
+  if (!result?.consentUrl) {
+    return { message: { severity: "error", text: "GetConsents returned no consent URL" } };
+  }
+
+  return {
+    type: "openUrl",
+    url: result.consentUrl,
+    refreshRecord: true,
+    closeModal: true,
+    windowFeatures: `width=${Math.round(screen.width * 0.7)},height=${Math.round(screen.height * 0.7)},left=${Math.round(screen.width * 0.15)},top=${Math.round(screen.height * 0.15)}`
+  };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C580B3B60DA5484387493A74CEB00D13">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
@@ -2528,6 +2957,193 @@ return {
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="E68790A7B65F4D45AB35E2BAE34C1F39">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="EA02D79CA1DE4B46909EA6EF64A66B53">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="EA02D79CA1DE4B46909EA6EF64A66B53">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const records = view.hookData.selectedRecords ?? [];
+  if (records.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runSiiAction(records);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="EA02D79CA1DE4B46909EA6EF64A66B53">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Shared helper mirroring the classic OB.AEATSII.execute (ModDefinicionProceso.js:14):
+// one remote call, the server's own severity/title/text in the banner, then a grid
+// refresh. Cloned per process because payscript module scope is per-process.
+const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiPaymentSending";
+const WARNING_LABEL = "AEATSII_WARNING_SEND";
+const TITLE_LABEL = "AEATSII_TITLE_SEND";
+
+const runSiiAction = async (records) => {
+  const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  // Classic closes the popup and runs nothing when the user declines.
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    ids: records.map((record) => record.id),
+    orgid: records[0].organization,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="EA02D79CA1DE4B46909EA6EF64A66B53">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="EA02D79CA1DE4B46909EA6EF64A66B53">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="EC673C215BAD4B13875323085B07F95D">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="EC673C215BAD4B13875323085B07F95D">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  // Classic builds this URL on the Classic host itself
+  // (OB.Utilities.getLocationUrlWithoutFragment() + "web/com.etendoerp.openapi/?tag=").
+  // `erpHosted` asks the substrate to do the same, priming a Classic session so
+  // the page can fetch its OpenAPI spec.
+  const name = view.hookData.selectedRecords?.[0]?.name ?? "";
+  return {
+    type: "openUrl",
+    url: `/web/com.etendoerp.openapi/?tag=${encodeURIComponent(name)}`,
+    erpHosted: true,
+    closeModal: true,
+  };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="EC673C215BAD4B13875323085B07F95D">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="F1EC1AB61DCD4858BAD3A52BE60006F9">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="F1EC1AB61DCD4858BAD3A52BE60006F9">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const roles = view.hookData.selectedRecords ?? [];
+  if (roles.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await recalculatePermissions(roles);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="F1EC1AB61DCD4858BAD3A52BE60006F9">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Mirrors OB.RoleInheritance.recalculatePermissions + .execute
+// (recalculatePermissionsProcess.js:53 and :27).
+const ACTION_HANDLER = "org.openbravo.role.inheritance.RecalculatePermissionsHandler";
+const TITLE_LABEL = "RecalculatePermissions";
+
+// Classic picks one of three labels: template / plain role for a single selection,
+// and a generic one for several. Kept as an if/else rather than chained ternaries.
+const confirmationText = (roles) => {
+  if (roles.length !== 1) return OB.I18N.getLabel("RecalculateMultipleRolesPermissions");
+  const role = roles[0];
+  const label = role.template ? "RecalculateTemplateRolePermissions" : "RecalculateRolePermissions";
+  return OB.I18N.getLabel(label, [role.name]);
+};
+
+const recalculatePermissions = async (roles) => {
+  const confirmed = await confirm(confirmationText(roles), {
+    title: OB.I18N.getLabel(TITLE_LABEL),
+  });
+  if (!confirmed) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    roles: roles.map((role) => role.id),
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { recalculatePermissions };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="F1EC1AB61DCD4858BAD3A52BE60006F9">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="F1EC1AB61DCD4858BAD3A52BE60006F9">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="F3ABCD40BD0047AF9E76071CF7D3FF04">
+      <oldValue><![CDATA[async (processDefinition, payload) => {
+
+  const result = await callAction("com.etendoerp.psd2.bank.integration.actionhandler.ReconnectConnection",
+    { _topLevel: true, id: payload.recordIds[0] }
+  );
+
+  if (result?.message?.severity === "error") {
+    throw new Error(result.message.text || "Reconnect connection failed");
+  }
+
+  return {
+    type: "openUrl",
+    url: result.reconnectUrl,
+    refreshRecord: true,
+    closeModal: true,
+    windowFeatures: `width=${Math.round(screen.width * 0.7)},height=${Math.round(screen.height * 0.7)},left=${Math.round(screen.width * 0.15)},top=${Math.round(screen.height * 0.15)}`
+  };
+}]]></oldValue>
+      <newValue><![CDATA[async (processDefinition, payload) => {
+  // callAction exposes the body nested (`.data`) and spread; accept either form.
+  const response = await callAction("com.etendoerp.psd2.bank.integration.actionhandler.ReconnectConnection",
+    { _topLevel: true, id: payload.recordIds[0] }
+  );
+  const result = response?.data ?? response;
+
+  // Classic (Reconnect.js:73-81) reports the handler's message and skips the popup
+  // in TWO cases: an error, and a success carrying no reconnectUrl (nothing to
+  // reconnect). Returning the message keeps the server's severity AND title.
+  const message = result?.message;
+  const isError = message?.severity === "error";
+  const isEmptySuccess = message?.severity === "success" && !result?.reconnectUrl;
+  if (isError || isEmptySuccess) {
+    return { message };
+  }
+  if (!result?.reconnectUrl) {
+    return { message: { severity: "error", text: "ReconnectConnection returned no URL" } };
+  }
+
+  return {
+    type: "openUrl",
+    url: result.reconnectUrl,
+    refreshRecord: true,
+    closeModal: true,
+    windowFeatures: `width=${Math.round(screen.width * 0.7)},height=${Math.round(screen.height * 0.7)},left=${Math.round(screen.width * 0.15)},top=${Math.round(screen.height * 0.15)}`
+  };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="F3ABCD40BD0047AF9E76071CF7D3FF04">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
