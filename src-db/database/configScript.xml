@@ -503,6 +503,14 @@ const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiEnvioFactura";
 const WARNING_LABEL = "AEATSII_WARNING_SEND";
 const TITLE_LABEL = "AEATSII_TITLE_SEND";
 
+// Classic's severity branch is `success` -> TYPE_SUCCESS, `warning` -> TYPE_WARNING and an
+// unconditional `else` -> TYPE_ERROR (ModDefinicionProceso.js:18-36). That else is a real
+// default, not a dead branch: the SII handlers answer their validation and failure paths with
+// `{ message: { title, text } }` and no `severity` at all, and classic paints those red.
+// Forwarding the raw severity would leave `msgType` undefined, which the platform reads as
+// a success toast.
+const toMessageType = (severity) => (severity === "success" || severity === "warning" ? severity : "error");
+
 const runSiiAction = async (records) => {
   const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
     title: OB.I18N.getLabel(TITLE_LABEL),
@@ -517,12 +525,73 @@ const runSiiAction = async (records) => {
 
   const message = response?.data?.message ?? {};
   return {
-    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    message: {
+      msgType: toMessageType(message.severity),
+      msgTitle: message.title,
+      msgText: message.text,
+    },
     responseActions: [{ refreshGrid: {} }],
   };
 };
 
 return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="2ECF46DAAEEB486EAF79D3594D50DE5F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="2ECF46DAAEEB486EAF79D3594D50DE5F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="3724E106FE4544F2B4402A1D1AE4E1AC">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="3724E106FE4544F2B4402A1D1AE4E1AC">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const recordIds = view.hookData.recordIds ?? [];
+  if (recordIds.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runMovementLineAction(recordIds);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="3724E106FE4544F2B4402A1D1AE4E1AC">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Mirrors the classic handler body (obwpl-movementline.js:37): confirm, one
+// remote call, the server's message in the banner, then close to refresh the view.
+const ACTION_HANDLER = "org.openbravo.warehouse.pickinglist.MovementLineHandler";
+const CONFIRM_LABEL = "OBWPL_LineRejectConfirm";
+const SERVER_ACTION = "reject";
+
+const runMovementLineAction = async (recordIds) => {
+  // Classic uses the bare isc.confirm(message, callback) form: no title override.
+  if (!(await confirm(OB.I18N.getLabel(CONFIRM_LABEL)))) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    movementlines: recordIds,
+    action: SERVER_ACTION,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runMovementLineAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="3724E106FE4544F2B4402A1D1AE4E1AC">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="3724E106FE4544F2B4402A1D1AE4E1AC">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
       <oldValue/>
@@ -623,6 +692,14 @@ return {};]]></newValue>
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="6DA8E27C96D04E329A7A54007AF2DB55">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="6DA8E27C96D04E329A7A54007AF2DB55">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="71E00A0E964E43AE81C5AFBCDCA5F87C">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
@@ -651,6 +728,14 @@ const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiCashReceiptSending
 const WARNING_LABEL = "AEATSII_WARNING_SEND";
 const TITLE_LABEL = "AEATSII_TITLE_SEND";
 
+// Classic's severity branch is `success` -> TYPE_SUCCESS, `warning` -> TYPE_WARNING and an
+// unconditional `else` -> TYPE_ERROR (ModDefinicionProceso.js:18-36). That else is a real
+// default, not a dead branch: the SII handlers answer their validation and failure paths with
+// `{ message: { title, text } }` and no `severity` at all, and classic paints those red.
+// Forwarding the raw severity would leave `msgType` undefined, which the platform reads as
+// a success toast.
+const toMessageType = (severity) => (severity === "success" || severity === "warning" ? severity : "error");
+
 const runSiiAction = async (records) => {
   const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
     title: OB.I18N.getLabel(TITLE_LABEL),
@@ -665,12 +750,20 @@ const runSiiAction = async (records) => {
 
   const message = response?.data?.message ?? {};
   return {
-    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    message: {
+      msgType: toMessageType(message.severity),
+      msgTitle: message.title,
+      msgText: message.text,
+    },
     responseActions: [{ refreshGrid: {} }],
   };
 };
 
 return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="73B931766AFE4D50A9FD25CB4547D197">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="73B931766AFE4D50A9FD25CB4547D197">
       <oldValue/>
@@ -878,6 +971,14 @@ const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiCorrectDuplicateIn
 const WARNING_LABEL = "AEATSII_WARNING_CORRECT";
 const TITLE_LABEL = "AEATSII_TITLE_SEND";
 
+// Classic's severity branch is `success` -> TYPE_SUCCESS, `warning` -> TYPE_WARNING and an
+// unconditional `else` -> TYPE_ERROR (ModDefinicionProceso.js:18-36). That else is a real
+// default, not a dead branch: the SII handlers answer their validation and failure paths with
+// `{ message: { title, text } }` and no `severity` at all, and classic paints those red.
+// Forwarding the raw severity would leave `msgType` undefined, which the platform reads as
+// a success toast.
+const toMessageType = (severity) => (severity === "success" || severity === "warning" ? severity : "error");
+
 const runSiiAction = async (records) => {
   const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
     title: OB.I18N.getLabel(TITLE_LABEL),
@@ -892,12 +993,24 @@ const runSiiAction = async (records) => {
 
   const message = response?.data?.message ?? {};
   return {
-    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    message: {
+      msgType: toMessageType(message.severity),
+      msgTitle: message.title,
+      msgText: message.text,
+    },
     responseActions: [{ refreshGrid: {} }],
   };
 };
 
 return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="92C02F9A367140C085D1EE3BD27C4E96">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="92C02F9A367140C085D1EE3BD27C4E96">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="99E532BA0306450A839F5DE238375238">
       <oldValue><![CDATA[async (_processDefinition, { selectedRecords, parentRecord }) => {
@@ -2019,6 +2132,14 @@ const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiCashReceiptSIIModi
 const WARNING_LABEL = "AEATSII_WARNING_SEND";
 const TITLE_LABEL = "AEATSII_TITLE_SEND";
 
+// Classic's severity branch is `success` -> TYPE_SUCCESS, `warning` -> TYPE_WARNING and an
+// unconditional `else` -> TYPE_ERROR (ModDefinicionProceso.js:18-36). That else is a real
+// default, not a dead branch: the SII handlers answer their validation and failure paths with
+// `{ message: { title, text } }` and no `severity` at all, and classic paints those red.
+// Forwarding the raw severity would leave `msgType` undefined, which the platform reads as
+// a success toast.
+const toMessageType = (severity) => (severity === "success" || severity === "warning" ? severity : "error");
+
 const runSiiAction = async (records) => {
   const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
     title: OB.I18N.getLabel(TITLE_LABEL),
@@ -2033,12 +2154,24 @@ const runSiiAction = async (records) => {
 
   const message = response?.data?.message ?? {};
   return {
-    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    message: {
+      msgType: toMessageType(message.severity),
+      msgTitle: message.title,
+      msgText: message.text,
+    },
     responseActions: [{ refreshGrid: {} }],
   };
 };
 
 return { runSiiAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="9FF06EA1E74845B8B74FBC36AAE40F94">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="9FF06EA1E74845B8B74FBC36AAE40F94">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="A2C19D0EF6594D14A64BC62E99A89CC3">
       <oldValue/>
@@ -2454,6 +2587,14 @@ const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiInvoiceSIIModifica
 const WARNING_LABEL = "AEATSII_WARNING_SEND";
 const TITLE_LABEL = "AEATSII_TITLE_SEND";
 
+// Classic's severity branch is `success` -> TYPE_SUCCESS, `warning` -> TYPE_WARNING and an
+// unconditional `else` -> TYPE_ERROR (ModDefinicionProceso.js:18-36). That else is a real
+// default, not a dead branch: the SII handlers answer their validation and failure paths with
+// `{ message: { title, text } }` and no `severity` at all, and classic paints those red.
+// Forwarding the raw severity would leave `msgType` undefined, which the platform reads as
+// a success toast.
+const toMessageType = (severity) => (severity === "success" || severity === "warning" ? severity : "error");
+
 const runSiiAction = async (records) => {
   const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
     title: OB.I18N.getLabel(TITLE_LABEL),
@@ -2468,7 +2609,11 @@ const runSiiAction = async (records) => {
 
   const message = response?.data?.message ?? {};
   return {
-    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    message: {
+      msgType: toMessageType(message.severity),
+      msgTitle: message.title,
+      msgText: message.text,
+    },
     responseActions: [{ refreshGrid: {} }],
   };
 };
@@ -2753,6 +2898,55 @@ return {
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="CAC397FDDF754A1A8FEE22FDDE8FE2FF">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="CAC397FDDF754A1A8FEE22FDDE8FE2FF">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const recordIds = view.hookData.recordIds ?? [];
+  if (recordIds.length === 0) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runMovementLineAction(recordIds);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="CAC397FDDF754A1A8FEE22FDDE8FE2FF">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Mirrors the classic handler body (obwpl-movementline.js:10): confirm, one
+// remote call, the server's message in the banner, then close to refresh the view.
+const ACTION_HANDLER = "org.openbravo.warehouse.pickinglist.MovementLineHandler";
+const CONFIRM_LABEL = "OBWPL_LineCompleteConfirm";
+const SERVER_ACTION = "confirm";
+
+const runMovementLineAction = async (recordIds) => {
+  // Classic uses the bare isc.confirm(message, callback) form: no title override.
+  if (!(await confirm(OB.I18N.getLabel(CONFIRM_LABEL)))) return { type: "closeModal" };
+
+  const response = await callAction(ACTION_HANDLER, {
+    movementlines: recordIds,
+    action: SERVER_ACTION,
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runMovementLineAction };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="CAC397FDDF754A1A8FEE22FDDE8FE2FF">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="CAC397FDDF754A1A8FEE22FDDE8FE2FF">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="CC73C4845CDC487395804946EACB225F">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -2984,6 +3178,14 @@ const ACTION_HANDLER = "org.openbravo.module.sii.process.MultiPaymentSending";
 const WARNING_LABEL = "AEATSII_WARNING_SEND";
 const TITLE_LABEL = "AEATSII_TITLE_SEND";
 
+// Classic's severity branch is `success` -> TYPE_SUCCESS, `warning` -> TYPE_WARNING and an
+// unconditional `else` -> TYPE_ERROR (ModDefinicionProceso.js:18-36). That else is a real
+// default, not a dead branch: the SII handlers answer their validation and failure paths with
+// `{ message: { title, text } }` and no `severity` at all, and classic paints those red.
+// Forwarding the raw severity would leave `msgType` undefined, which the platform reads as
+// a success toast.
+const toMessageType = (severity) => (severity === "success" || severity === "warning" ? severity : "error");
+
 const runSiiAction = async (records) => {
   const confirmed = await confirm(OB.I18N.getLabel(WARNING_LABEL), {
     title: OB.I18N.getLabel(TITLE_LABEL),
@@ -2998,7 +3200,11 @@ const runSiiAction = async (records) => {
 
   const message = response?.data?.message ?? {};
   return {
-    message: { msgType: message.severity, msgTitle: message.title, msgText: message.text },
+    message: {
+      msgType: toMessageType(message.severity),
+      msgTitle: message.title,
+      msgText: message.text,
+    },
     responseActions: [{ refreshGrid: {} }],
   };
 };
