@@ -593,6 +593,48 @@ return { runMovementLineAction };]]></newValue>
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="3B85498FECA646F19AD0E5D416C36776">
+      <oldValue/>
+      <newValue><![CDATA[async (_processDefinition, { selectedRecords }) => {
+  // Always answer with a middlewareTokenProcess schema, carrying any failure inside it: the modal
+  // does not read the hook's error channel, so a throwing onLoad would render an empty dialog.
+  const base = {
+    type: "middlewareTokenProcess",
+    providers: {},
+    accountId: "",
+    redirectUri: "",
+    startEndpoint: "",
+  };
+
+  const record = selectedRecords?.[0];
+  if (!record) {
+    return { ...base, error: "OBUIAPP_NoSelectedRecords" };
+  }
+
+  // The middleware serves /available-providers without CORS headers, so the browser cannot read it.
+  // This handler performs the call server-side and returns the account id in the same round trip,
+  // which is what lets the component open its popup without any await inside the click.
+  const response = await callAction("com.etendoerp.metadata.SSOProviderListActionHandler", {
+    etrxOauthProviderId: record.id,
+  });
+
+  if (response?.status !== "Success") {
+    return { ...base, error: response?.message || "ETRX_ErrorFetchProviders_Description" };
+  }
+
+  return {
+    ...base,
+    providers: response.providers || {},
+    accountId: response.accountId || "",
+    redirectUri: response.redirectUri || "",
+    startEndpoint: response.startEndpoint || "",
+  };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="3B85498FECA646F19AD0E5D416C36776">
+      <oldValue/>
+      <newValue><![CDATA[Y]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="40317268E74C445FA85DB97249AFFE37">
       <oldValue/>
       <newValue><![CDATA[Y]]></newValue>
