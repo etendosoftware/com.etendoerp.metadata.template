@@ -593,6 +593,10 @@ return { runMovementLineAction };]]></newValue>
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="40317268E74C445FA85DB97249AFFE37">
+      <oldValue/>
+      <newValue><![CDATA[Y]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="45ED6D0400FD42BEA9771C549A9AE8AB">
       <oldValue/>
       <newValue><![CDATA[async (process, view) => {
@@ -766,6 +770,85 @@ return { runSiiAction };]]></newValue>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="73B931766AFE4D50A9FD25CB4547D197">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="7DC2C8DC186B4C1DB18E147911950861">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="7DC2C8DC186B4C1DB18E147911950861">
+      <oldValue/>
+      <newValue><![CDATA[async (process, view) => {
+  const productId = view.hookData.recordIds?.[0];
+  if (!productId) {
+    return { error: { msgText: OB.I18N.getLabel("OBUIAPP_NoSelectedRecords"), msgType: "error" } };
+  }
+  return await runUpdateInvariants(productId);
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="7DC2C8DC186B4C1DB18E147911950861">
+      <oldValue/>
+      <newValue><![CDATA[// @module-scope
+// Mirrors OB.ProductCharacteristics.execute + isc.UpdateInvariantCharacteristicsPopup
+// (productCharacteristicsProcess.js:23 and :66): fetch the invariant characteristics,
+// let the user pick a value for each from a LIST, post the updates, report, refresh.
+const ACTION_HANDLER = "org.openbravo.client.application.event.UpdateInvariantCharacteristicsHandler";
+
+// SmartClient value maps are { value: label } objects; a LIST field takes [{ value, label }].
+const toRefList = (valueMap) => {
+  if (Array.isArray(valueMap)) return valueMap;
+  return Object.entries(valueMap ?? {}).map(([value, label]) => ({ value, label: String(label) }));
+};
+
+const runUpdateInvariants = async (productId) => {
+  const init = await callAction(ACTION_HANDLER, { productId, action: "INITIALIZE" });
+  const characteristicList = init?.data?.productCharList ?? [];
+
+  const existingProdChValueByCharId = {};
+  const fields = characteristicList.map((characteristic) => {
+    existingProdChValueByCharId[characteristic.id] = characteristic.existingProdChValue;
+    return {
+      id: characteristic.id,
+      name: characteristic.name,
+      inputType: "LIST",
+      refList: toRefList(characteristic.valueMap),
+      defaultValue: characteristic.selectedValue,
+    };
+  });
+
+  const collected = await openDynamicForm({ title: "Update Characteristics", fields });
+  // Cancel: classic closes the popup and posts nothing.
+  if (!collected) return { type: "closeModal" };
+
+  const updatedValues = {};
+  const existingProdChValues = {};
+  for (const item of collected) {
+    updatedValues[item.id] = item.value;
+    existingProdChValues[item.id] = existingProdChValueByCharId[item.id];
+  }
+
+  const response = await callAction(ACTION_HANDLER, {
+    productId,
+    updatedValues,
+    existingProdChValues,
+    action: "UPDATE",
+  });
+
+  const message = response?.data?.message ?? {};
+  return {
+    message: { msgType: message.severity, msgText: message.text },
+    responseActions: [{ refreshGrid: {} }],
+  };
+};
+
+return { runUpdateInvariants };]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="7DC2C8DC186B4C1DB18E147911950861">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="7DC2C8DC186B4C1DB18E147911950861">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
@@ -2681,6 +2764,10 @@ return { runSiiAction };]]></newValue>
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="C4043A216BD7429BB4D77469E7886BAA">
+      <oldValue/>
+      <newValue><![CDATA[Y]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_PAYSCRIPT_LOGIC" pkRow="C4265E27C8134096B49DFBF69369DFC6">
       <oldValue/>
       <newValue><![CDATA[const RFC_WINDOW_ID = 'FF808081330213E60133021822E40007';
@@ -2959,6 +3046,39 @@ return { runMovementLineAction };]]></newValue>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_SMFMU_SCAN" pkRow="CC73C4845CDC487395804946EACB225F">
+      <oldValue/>
+      <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONLOAD" pkRow="DDADF2E25EEF444A80208E681EFF24CD">
+      <oldValue/>
+      <newValue><![CDATA[() => ({ type: "directExecute" })]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_ONPROCESS" pkRow="DDADF2E25EEF444A80208E681EFF24CD">
+      <oldValue/>
+      <newValue><![CDATA[(process, view) => {
+  const selectedRecord = view.hookData.selectedRecords?.[0];
+
+  const screenWidth = window.screen.width;
+  const screenHeight = window.screen.height;
+  const popupWidth = screenWidth * 0.5;
+  const popupHeight = screenHeight * 0.5;
+  const left = (screenWidth - popupWidth) / 2;
+  const upperMargin = (screenHeight - popupHeight) / 2;
+  const windowFeatures = `width=${popupWidth},height=${popupHeight},left=${left},top=${upperMargin}`;
+
+  const state = crypto.randomUUID();
+  const userId = OB.User.id;
+  const etrxOauthProviderId = selectedRecord.id;
+  const encodedState = btoa(JSON.stringify({ state, userId, etrxOauthProviderId }));
+
+  const baseURL = selectedRecord.authorizationEndpoint;
+  const separator = baseURL.includes("?") ? "&" : "?";
+  const url = `${baseURL}${separator}state=${encodedState}`;
+
+  return { type: "openUrl", url, windowFeatures, closeModal: true };
+}]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="DDADF2E25EEF444A80208E681EFF24CD">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
     </columnDataChange>
@@ -3352,6 +3472,10 @@ return { recalculatePermissions };]]></newValue>
     <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="F3ABCD40BD0047AF9E76071CF7D3FF04">
       <oldValue/>
       <newValue><![CDATA[N]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PROCESS" columnname="EM_ETMETA_CUSTOM_COMPONENT" pkRow="F3B77135F9D94C8FA1EFA270691265FB">
+      <oldValue/>
+      <newValue><![CDATA[Y]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="0981CFAA3B244E3C8CDF439626D4B352">
       <oldValue/>
