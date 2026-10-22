@@ -934,6 +934,18 @@ return { runUpdateInvariants };]]></newValue>
     });
   };
 
+  // Classic sends the selected records as the grid holds them now: a line that is no longer loaded
+  // (e.g. filtered out after a refresh) is not sent, and the loaded ones carry their current values.
+  const loadedSelectedRecords = function() {
+    return (grid.getSelectedRecords() || [])
+      .map(function(record) {
+        return grid.getEditedRecord(grid.getRecordIndex(record));
+      })
+      .filter(function(record) {
+        return Boolean(record);
+      });
+  };
+
   const buttons = view.popupButtons.members;
   let unmatchButton;
   for (let i = 0; i < buttons.length; i++) {
@@ -948,7 +960,7 @@ return { runUpdateInvariants };]]></newValue>
     unmatchButton.action = function() {
       OB.RemoteCallManager.call(
         UNMATCH_HANDLER,
-        { bankStatementLineIds: grid.getSelectedRecords().map(toUnmatchRecord) },
+        { bankStatementLineIds: loadedSelectedRecords().map(toUnmatchRecord) },
         {},
         function(response, data) {
           view.onRefreshFunction(view);
@@ -3835,7 +3847,9 @@ return { recalculatePermissions };]]></newValue>
     const selection = grid.getSelectedRecords() || [];
     let hasCleared = false;
     for (let i = 0; i < selection.length; i++) {
-      if (selection[i] && selection[i].cleared) {
+      // Classic checks the loaded row (current values); a selected line no longer loaded does not count.
+      const record = grid.getEditedRecord(grid.getRecordIndex(selection[i]));
+      if (record && record.cleared) {
         hasCleared = true;
         break;
       }
