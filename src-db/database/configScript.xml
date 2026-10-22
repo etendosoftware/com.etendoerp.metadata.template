@@ -926,6 +926,14 @@ return { runUpdateInvariants };]]></newValue>
   view.cancelButton.hide();
   view.parentElement.parentElement.closeButton.hide();
 
+  // Classic sends each selected record with its bslUpdated as a Date (serialized in UTC), which the
+  // handler compares with the line's update time; the grid row holds it as a string with an offset.
+  const toUnmatchRecord = function(record) {
+    return Object.assign({}, record, {
+      bslUpdated: record.bslUpdated ? new Date(record.bslUpdated) : record.bslUpdated
+    });
+  };
+
   const buttons = view.popupButtons.members;
   let unmatchButton;
   for (let i = 0; i < buttons.length; i++) {
@@ -940,7 +948,7 @@ return { runUpdateInvariants };]]></newValue>
     unmatchButton.action = function() {
       OB.RemoteCallManager.call(
         UNMATCH_HANDLER,
-        { bankStatementLineIds: grid.getSelectedRecords() },
+        { bankStatementLineIds: grid.getSelectedRecords().map(toUnmatchRecord) },
         {},
         function(response, data) {
           view.onRefreshFunction(view);
@@ -3915,6 +3923,9 @@ return { recalculatePermissions };]]></newValue>
   grid.onSelectionToggle(function(record, state) {
     refreshUnmatchVisibility();
   });
+
+  // Classic recomputes the Unmatch Selected visibility whenever the grid redraws its rows.
+  refreshUnmatchVisibility();
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="4F7E3F7DEF3E41BA81566E6063AB5920">
