@@ -3853,6 +3853,8 @@ return { recalculatePermissions };]]></newValue>
           return;
         }
         view.openProcess({
+          // Classic `callerField: me`: the row button's record and the grid's view.
+          callerField: { record: record, view: view },
           paramWindow: true,
           processId: processId,
           windowId: view.windowId,
