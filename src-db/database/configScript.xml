@@ -4091,7 +4091,8 @@ return { recalculatePermissions };]]></newValue>
     HANDLER,
     {
       strPaymentId: item.getValue(),
-      strDescription: form.getItem('description').getValue()
+      // The handler reads strDescription as a string: an empty description must be sent, not dropped.
+      strDescription: form.getItem('description').getValue() ?? ''
     },
     {},
     callback
