@@ -1292,7 +1292,8 @@ return { runSiiAction };]]></newValue>
   const map = overpaymentAction.getValueMap() || [];
   const original = {};
   for (const opt of map) {
-    original[opt.id || opt.value] = opt.label;
+    // A list option's value is its search key (CR, RE); its id is the record id.
+    original[opt.value || opt.id] = opt.label;
   }
   form._overpaymentOriginalValueMap = original;
 
@@ -1559,14 +1560,22 @@ AP.recalcDisplayLogicOrReadOnlyLogic = (form, view, affectedParams) => {
   };
 
   view.fireOnPause('recalcDisplayLogicOrReadOnlyLogic' + affectedParams, () => {
-    OB.RemoteCallManager.call(DISPLAYLOGIC_HANDLER, { affectedParams, params }, {}, callback);
+    OB.RemoteCallManager.call(
+      DISPLAYLOGIC_HANDLER,
+      { affectedParams: AP.paramIds(form, affectedParams), params },
+      {},
+      callback
+    );
   }, 200);
 };
 
+// The handlers receive parameters by id (Classic `form.getField(name).paramId`), not by name.
+AP.paramIds = (form, names) => names.map((name) => form.getItem(name).paramId || name);
+
 AP.reloadLabels = (form) => {
   const params = {
-    businessPartner: 'received_from',
-    financialAccount: 'fin_financial_account_id',
+    businessPartner: form.getItem('received_from').paramId,
+    financialAccount: form.getItem('fin_financial_account_id').paramId,
     issotrx: form.getItem('issotrx').getValue()
   };
   const callback = (response, data) => {
@@ -1691,8 +1700,10 @@ AP.updateDifference = (form, view) => {
   if (diffAmt.signum() !== 0) {
     AP.updateDifferenceActions(form);
   }
-  if (view) {
-    AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['overpayment_action_display_logic']);
+  // As Classic, always: a change of Actual Payment reaches here without a view.
+  const paramWindow = view || form.paramWindow;
+  if (paramWindow) {
+    AP.recalcDisplayLogicOrReadOnlyLogic(form, paramWindow, ['overpayment_action_display_logic']);
   }
 };
 
