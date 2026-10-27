@@ -926,6 +926,26 @@ return { runUpdateInvariants };]]></newValue>
   view.cancelButton.hide();
   view.parentElement.parentElement.closeButton.hide();
 
+  // Classic sends each selected record with its bslUpdated as a Date (serialized in UTC), which the
+  // handler compares with the line's update time; the grid row holds it as a string with an offset.
+  const toUnmatchRecord = function(record) {
+    return Object.assign({}, record, {
+      bslUpdated: record.bslUpdated ? new Date(record.bslUpdated) : record.bslUpdated
+    });
+  };
+
+  // Classic sends the selected records as the grid holds them now: a line that is no longer loaded
+  // (e.g. filtered out after a refresh) is not sent, and the loaded ones carry their current values.
+  const loadedSelectedRecords = function() {
+    return (grid.getSelectedRecords() || [])
+      .map(function(record) {
+        return grid.getEditedRecord(grid.getRecordIndex(record));
+      })
+      .filter(function(record) {
+        return Boolean(record);
+      });
+  };
+
   const buttons = view.popupButtons.members;
   let unmatchButton;
   for (let i = 0; i < buttons.length; i++) {
@@ -940,7 +960,7 @@ return { runUpdateInvariants };]]></newValue>
     unmatchButton.action = function() {
       OB.RemoteCallManager.call(
         UNMATCH_HANDLER,
-        { bankStatementLineIds: grid.getSelectedRecords() },
+        { bankStatementLineIds: loadedSelectedRecords().map(toUnmatchRecord) },
         {},
         function(response, data) {
           view.onRefreshFunction(view);
@@ -1272,7 +1292,8 @@ return { runSiiAction };]]></newValue>
   const map = overpaymentAction.getValueMap() || [];
   const original = {};
   for (const opt of map) {
-    original[opt.id || opt.value] = opt.label;
+    // A list option's value is its search key (CR, RE); its id is the record id.
+    original[opt.value || opt.id] = opt.label;
   }
   form._overpaymentOriginalValueMap = original;
 
@@ -1539,14 +1560,22 @@ AP.recalcDisplayLogicOrReadOnlyLogic = (form, view, affectedParams) => {
   };
 
   view.fireOnPause('recalcDisplayLogicOrReadOnlyLogic' + affectedParams, () => {
-    OB.RemoteCallManager.call(DISPLAYLOGIC_HANDLER, { affectedParams, params }, {}, callback);
+    OB.RemoteCallManager.call(
+      DISPLAYLOGIC_HANDLER,
+      { affectedParams: AP.paramIds(form, affectedParams), params },
+      {},
+      callback
+    );
   }, 200);
 };
 
+// The handlers receive parameters by id (Classic `form.getField(name).paramId`), not by name.
+AP.paramIds = (form, names) => names.map((name) => form.getItem(name).paramId || name);
+
 AP.reloadLabels = (form) => {
   const params = {
-    businessPartner: 'received_from',
-    financialAccount: 'fin_financial_account_id',
+    businessPartner: form.getItem('received_from').paramId,
+    financialAccount: form.getItem('fin_financial_account_id').paramId,
     issotrx: form.getItem('issotrx').getValue()
   };
   const callback = (response, data) => {
@@ -1671,8 +1700,10 @@ AP.updateDifference = (form, view) => {
   if (diffAmt.signum() !== 0) {
     AP.updateDifferenceActions(form);
   }
-  if (view) {
-    AP.recalcDisplayLogicOrReadOnlyLogic(form, view, ['overpayment_action_display_logic']);
+  // As Classic, always: a change of Actual Payment reaches here without a view.
+  const paramWindow = view || form.paramWindow;
+  if (paramWindow) {
+    AP.recalcDisplayLogicOrReadOnlyLogic(form, paramWindow, ['overpayment_action_display_logic']);
   }
 };
 
@@ -3827,7 +3858,9 @@ return { recalculatePermissions };]]></newValue>
     const selection = grid.getSelectedRecords() || [];
     let hasCleared = false;
     for (let i = 0; i < selection.length; i++) {
-      if (selection[i] && selection[i].cleared) {
+      // Classic checks the loaded row (current values); a selected line no longer loaded does not count.
+      const record = grid.getEditedRecord(grid.getRecordIndex(selection[i]));
+      if (record && record.cleared) {
         hasCleared = true;
         break;
       }
@@ -3853,6 +3886,8 @@ return { recalculatePermissions };]]></newValue>
           return;
         }
         view.openProcess({
+          // Classic `callerField: me`: the row button's record and the grid's view.
+          callerField: { record: record, view: view },
           paramWindow: true,
           processId: processId,
           windowId: view.windowId,
@@ -3913,6 +3948,9 @@ return { recalculatePermissions };]]></newValue>
   grid.onSelectionToggle(function(record, state) {
     refreshUnmatchVisibility();
   });
+
+  // Classic recomputes the Unmatch Selected visibility whenever the grid redraws its rows.
+  refreshUnmatchVisibility();
 }]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="4F7E3F7DEF3E41BA81566E6063AB5920">
@@ -4064,7 +4102,8 @@ return { recalculatePermissions };]]></newValue>
     HANDLER,
     {
       strPaymentId: item.getValue(),
-      strDescription: form.getItem('description').getValue()
+      // The handler reads strDescription as a string: an empty description must be sent, not dropped.
+      strDescription: form.getItem('description').getValue() ?? ''
     },
     {},
     callback
