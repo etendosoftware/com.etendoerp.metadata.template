@@ -1826,6 +1826,41 @@ AP.updateCreditTotal = (form) => {
   return true;
 };
 
+// Classic distributeAmount: the amount is only distributed over the loaded order/invoice records, so while
+// the grid still has records to load the user is told why (APRM_NoDistributeMsg), unless they turned the
+// message off with "Never show this message again" (APRM_ShowNoDistributeMsg = N).
+const NO_DISTRIBUTE_MSG = 'APRM_NoDistributeMsg';
+const SHOW_NO_DISTRIBUTE_MSG = 'APRM_ShowNoDistributeMsg';
+const NEVER_SHOW_AGAIN_MSG = 'OBUIAPP_NeverShowMessageAgain';
+let noDistributeMessageShown = false;
+
+AP.showNoDistributeMessage = (orderInvoice) => {
+  const data = orderInvoice.data || {};
+  if (!(data.cachedRows < data.totalRows)) {
+    if (noDistributeMessageShown) {
+      messageBar.hide();
+      noDistributeMessageShown = false;
+    }
+    return;
+  }
+  const showMessage = OB.PropertyStore.get(SHOW_NO_DISTRIBUTE_MSG);
+  if (showMessage === 'N' || showMessage === '"N"') return;
+  Promise.all([OB.I18N.getLabelFromServer(NO_DISTRIBUTE_MSG), OB.I18N.getLabelFromServer(NEVER_SHOW_AGAIN_MSG)])
+    .then(([text, neverShowAgain]) => {
+      if (!text) return;
+      const neverShowAction = {
+        label: neverShowAgain,
+        onClick: () => {
+          messageBar.hide();
+          noDistributeMessageShown = false;
+          OB.PropertyStore.set(SHOW_NO_DISTRIBUTE_MSG, 'N');
+        },
+      };
+      messageBar.setMessage('info', null, text, neverShowAgain ? [neverShowAction] : []);
+      noDistributeMessageShown = true;
+    });
+};
+
 AP.distributeAmount = (view, form, onActualPaymentChange) => {
   let amount = bd(form.getItem('actual_payment').getValue() || 0);
   const orderInvoice = AP.grid(form, 'order_invoice');
@@ -1840,6 +1875,7 @@ AP.distributeAmount = (view, form, onActualPaymentChange) => {
   const autoDistributeAmt = OB.PropertyStore.get('APRM_AutoDistributeAmt');
 
   if (autoDistributeAmt !== 'N' && autoDistributeAmt !== '"N"') {
+    AP.showNoDistributeMessage(orderInvoice);
     amount = amount.subtract(glitemamt);
     amount = amount.add(creditamt);
     if (issotrx && AP.isMultiCurrency(form)) {
