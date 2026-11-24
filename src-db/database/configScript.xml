@@ -4314,6 +4314,17 @@ return { recalculatePermissions };]]></newValue>
   form.getItem('dateacct').setValue(item.getValue());
 }]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_PARAMETER_CHANGE" pkRow="A0898605038B4C2BABC208FD9785604F">
+      <oldValue/>
+      <newValue><![CDATA[(item, view, form, grid) => {
+  const GRID_KEY = 'pending payments';
+  const gridItem = form.getItem(GRID_KEY);
+  const viewGrid = (gridItem && gridItem.canvas && gridItem.canvas.viewGrid) || grid;
+  if (viewGrid) {
+    viewGrid.fetchData(viewGrid.getCriteria());
+  }
+}]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="OBUIAPP_PARAMETER" columnname="EM_ETMETA_ON_GRID_LOAD" pkRow="A801DA25DEAA404A8C651626CA31B22F">
       <oldValue/>
       <newValue><![CDATA[(grid, view, parameters) => {
